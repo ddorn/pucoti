@@ -37,6 +37,7 @@ from typer import Argument, Option
 from enum import Enum
 import random
 import atexit
+from os_specific_window_manager import set_window_to_float
 
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
@@ -411,6 +412,8 @@ def place_window(window, x: int, y: int):
             subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError as e:
             warnings.warn(f"Failed to move window on sway: {e}")
+    set_window_to_float()
+
 
 
 def play(sound):
