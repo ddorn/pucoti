@@ -31,7 +31,6 @@ from time import time
 from typing import Annotated
 from pathlib import Path
 import re
-import warnings
 import typer
 from typer import Argument, Option
 from enum import Enum
@@ -70,9 +69,6 @@ PUCOTI
 
 {SHORTCUTS}
 """.strip()
-
-# Diegouses sway, and it needs a few tweaks as it's a non-standard window manager.
-RUNS_ON_SWAY = os.environ.get("SWAYSOCK") is not None
 
 
 def fmt_duration(seconds):
@@ -401,17 +397,7 @@ def place_window(window, x: int, y: int):
     # Is there a way to know if this worked? It doesn't on sway.
     # It works on some platforms.
     window.position = (x, y)
-
-    if RUNS_ON_SWAY:
-        # Thanks gpt4! This moves the window while keeping it on the same display.
-        cmd = (
-            """swaymsg -t get_outputs | jq -r \'.[] | select(.focused) | .rect | "\\(.x + %d) \\(.y + %d)"\' | xargs -I {} swaymsg \'[title="PUCOTI"] floating enable, move absolute position {}\'"""
-            % (x, y)
-        )
-        try:
-            subprocess.check_output(cmd, shell=True)
-        except subprocess.CalledProcessError as e:
-            warnings.warn(f"Failed to move window on sway: {e}")
+       
     set_window_to_float()
 
 

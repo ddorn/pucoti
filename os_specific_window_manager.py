@@ -1,12 +1,15 @@
 import sys
+import os
 import platform
 import subprocess
+import warnings
 
-def is_macos():
-    return sys.platform == 'darwin' or platform.system() == 'Darwin'
+# Diegouses sway, and it needs a few tweaks as it's a non-standard window manager.
+RUNS_ON_SWAY = os.environ.get("SWAYSOCK") is not None
+IS_MACOS = sys.platform == 'darwin' or platform.system() == 'Darwin'
 
 def set_window_to_float():
-    if is_macos():
+    if IS_MACOS:
         try:
             from AppKit import (
                 NSApplication,
@@ -19,15 +22,13 @@ def set_window_to_float():
             ns_window.setCollectionBehavior_(NSWindowCollectionBehaviorCanJoinAllSpaces)
         except Exception as e:
             print(e)
-    else:
+    elif RUNS_ON_SWAY:
+         # Thanks gpt4! This moves the window while keeping it on the same display.
+        cmd = (
+            """swaymsg -t get_outputs | jq -r \'.[] | select(.focused) | .rect | "\\(.x + %d) \\(.y + %d)"\' | xargs -I {} swaymsg \'[title="PUCOTI"] floating enable, move absolute position {}\'"""
+            % (x, y)
+        )
         try:
-            cmd = f'swaymsg "[title=\\"PUCOTI\\"] floating enable, move absolute position {x} {y}"'
-            # Thanks gpt4!
-            cmd = (
-                """swaymsg -t get_outputs | jq -r \'.[] | select(.focused) | .rect | "\\(.x + %d) \\(.y + %d)"\' | xargs -I {} swaymsg \'[title="PUCOTI"] floating enable, move absolute position {}\'"""
-                % (x, y)
-            )
-            print("Running:", cmd)
             subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError as e:
-            print(e.output)
+            warnings.warn(f"Failed to move window on sway: {e}")
