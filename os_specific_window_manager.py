@@ -6,7 +6,8 @@ import warnings
 
 # Diegouses sway, and it needs a few tweaks as it's a non-standard window manager.
 RUNS_ON_SWAY = os.environ.get("SWAYSOCK") is not None
-IS_MACOS = sys.platform == 'darwin' or platform.system() == 'Darwin'
+IS_MACOS = sys.platform == "darwin" or platform.system() == "Darwin"
+
 
 def set_window_to_float():
     if IS_MACOS:
@@ -16,6 +17,7 @@ def set_window_to_float():
                 NSFloatingWindowLevel,
                 NSWindowCollectionBehaviorCanJoinAllSpaces,
             )
+
             ns_app = NSApplication.sharedApplication()
             ns_window = ns_app.windows()[0]
             ns_window.setLevel_(NSFloatingWindowLevel)
@@ -23,7 +25,7 @@ def set_window_to_float():
         except Exception as e:
             print(e)
     elif RUNS_ON_SWAY:
-         # Thanks gpt4! This moves the window while keeping it on the same display.
+        # Thanks gpt4! This moves the window while keeping it on the same display.
         cmd = (
             """swaymsg -t get_outputs | jq -r \'.[] | select(.focused) | .rect | "\\(.x + %d) \\(.y + %d)"\' | xargs -I {} swaymsg \'[title="PUCOTI"] floating enable, move absolute position {}\'"""
             % (x, y)

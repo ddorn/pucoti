@@ -397,9 +397,8 @@ def place_window(window, x: int, y: int):
     # Is there a way to know if this worked? It doesn't on sway.
     # It works on some platforms.
     window.position = (x, y)
-       
-    set_window_to_float()
 
+    set_window_to_float()
 
 
 def play(sound):
