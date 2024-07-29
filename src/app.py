@@ -34,52 +34,19 @@ from typer import Argument, Option
 from enum import Enum
 import atexit
 
+# By default pygame prints its version to the console when imported. We deactivate that.
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
-
-# My version of pygame-ce fails
-if os.environ.get("SDL_VIDEODRIVER") == "wayland":
-    os.environ["SDL_VIDEODRIVER"] = "x11"
 
 import pygame
 import pygame.locals as pg
 import pygame._sdl2 as sdl2
 
 
-from src.dfont import DFont
-from src.utils import (
-    fmt_duration,
-    fmt_time,
-    compute_timer_end,
-    shorten,
-    color_from_name,
-    human_duration,
-    shift_is_pressed,
-    get_number_from_key,
-)
+from src import pygame_utils
+from src import time_utils
 from src import constants
 from src import platforms
-
-
-def play(sound):
-    pygame.mixer.music.load(sound)
-    pygame.mixer.music.play()
-
-
-def split_rect(rect, *ratios, horizontal: bool = False):
-    """Split a rect vertically in ratios."""
-    total_ratio = sum(ratios)
-    ratios = [r / total_ratio for r in ratios]
-    cummulative_ratios = [0] + [sum(ratios[:i]) for i in range(1, len(ratios) + 1)]
-    if horizontal:
-        xs = [rect.left + int(rect.width * r) for r in cummulative_ratios]
-        return [
-            pygame.Rect(xs[i], rect.top, xs[i + 1] - xs[i], rect.height) for i in range(len(ratios))
-        ]
-    else:
-        ys = [rect.top + int(rect.height * r) for r in cummulative_ratios]
-        return [
-            pygame.Rect(rect.left, ys[i], rect.width, ys[i + 1] - ys[i]) for i in range(len(ratios))
-        ]
+from src.dfont import DFont
 
 
 @dataclass
@@ -134,11 +101,14 @@ class Scene(Enum):
         if no_total:
             layout.pop("totals", None)
 
-        rects = {k: rect for k, rect in zip(layout.keys(), split_rect(screen, *layout.values()))}
+        rects = {
+            k: rect
+            for k, rect in zip(layout.keys(), pygame_utils.split_rect(screen, *layout.values()))
+        }
 
         # Bottom has horizontal layout with [total_time | purpose_time]
         if total_time_rect := rects.pop("totals", None):
-            rects["total_time"], _, rects["purpose_time"] = split_rect(
+            rects["total_time"], _, rects["purpose_time"] = pygame_utils.split_rect(
                 total_time_rect, 1, 0.2, 1, horizontal=True
             )
 
@@ -152,7 +122,7 @@ class CountdownCallback:
         time, _, command = time_and_command.partition(":")
         self.command = command
         if isinstance(time, str):
-            self.time = human_duration(time)
+            self.time = time_utils.human_duration(time)
         else:
             self.time = time
         self.executed = False
@@ -221,7 +191,7 @@ def main(
     position = 0
     platforms.place_window(window, *window_position)
 
-    initial_duration = human_duration(initial_timer)
+    initial_duration = time_utils.human_duration(initial_timer)
     start = round(time())
     timer_end = initial_duration
     last_rung = 0
@@ -285,22 +255,26 @@ def main(
                     else:
                         scene = Scene.MAIN
                 elif event.key == pg.K_j:
-                    timer_end -= 60 * 5 if shift_is_pressed(event) else 60
+                    timer_end -= 60 * 5 if pygame_utils.shift_is_pressed(event) else 60
                 elif event.key == pg.K_k:
-                    timer_end += 60 * 5 if shift_is_pressed(event) else 60
+                    timer_end += 60 * 5 if pygame_utils.shift_is_pressed(event) else 60
                 elif event.key in constants.NUMBER_KEYS:
-                    new_duration = 60 * get_number_from_key(event.key)
-                    if shift_is_pressed(event):
+                    new_duration = 60 * pygame_utils.get_number_from_key(event.key)
+                    if pygame_utils.shift_is_pressed(event):
                         new_duration *= 10
-                    timer_end = compute_timer_end(new_duration, start)
+                    timer_end = time_utils.compute_timer_end(new_duration, start)
                     initial_duration = new_duration
                 elif event.key == pg.K_r:
-                    timer_end = compute_timer_end(initial_duration, start)
+                    timer_end = time_utils.compute_timer_end(initial_duration, start)
                 elif event.key == pg.K_MINUS:
-                    platforms.adjust_window_size(window, 1 / constants.WINDOW_SCALE)
+                    pygame_utils.scale_window(
+                        window, 1 / constants.WINDOW_SCALE, constants.MIN_WINDOW_SIZE
+                    )
                     platforms.place_window(window, *constants.POSITIONS[position])
                 elif event.key == pg.K_PLUS or event.key == pg.K_EQUALS:
-                    platforms.adjust_window_size(window, constants.WINDOW_SCALE)
+                    pygame_utils.scale_window(
+                        window, constants.WINDOW_SCALE, constants.MIN_WINDOW_SIZE
+                    )
                     platforms.place_window(window, *constants.POSITIONS[position])
                 elif event.key == pg.K_p:
                     position = (position + 1) % len(constants.POSITIONS)
@@ -340,13 +314,16 @@ def main(
         if time_rect := layout.get("time"):
             color = timer_up_color if remaining < 0 else timer_color
             t = big_font.render(
-                fmt_duration(abs(remaining)), time_rect.size, color, monospaced_time=True
+                time_utils.fmt_duration(abs(remaining)),
+                time_rect.size,
+                color,
+                monospaced_time=True,
             )
             screen.blit(t, t.get_rect(center=time_rect.center))
 
         if total_time_rect := layout.get("total_time"):
             t = normal_font.render(
-                fmt_duration(time() - start),
+                time_utils.fmt_duration(time() - start),
                 total_time_rect.size,
                 total_time_color,
                 monospaced_time=True,
@@ -355,7 +332,7 @@ def main(
 
         if purpose_time_rect := layout.get("purpose_time"):
             t = normal_font.render(
-                fmt_duration(time() - purpose_start_time),
+                time_utils.fmt_duration(time() - purpose_start_time),
                 purpose_time_rect.size,
                 purpose_color,
                 monospaced_time=True,
@@ -379,9 +356,9 @@ def main(
             timestamps = [p.timestamp for p in purpose_history] + [time()]
             rows = [
                 [
-                    fmt_duration(end_time - p.timestamp),
-                    shorten(p.text, 40),
-                    fmt_time(p.timestamp, relative=show_relative_time),
+                    time_utils.fmt_duration(end_time - p.timestamp),
+                    pygame_utils.shorten(p.text, 40),
+                    time_utils.fmt_time(p.timestamp, relative=show_relative_time),
                 ]
                 for p, end_time in zip(purpose_history, timestamps[1:], strict=True)
                 if p.text
@@ -414,7 +391,7 @@ def main(
             debug_font = normal_font.get_font(20)
             for name, rect in locals().items():
                 if isinstance(rect, pygame.Rect):
-                    color = color_from_name(name)
+                    color = pygame_utils.random_color(name)
                     pygame.draw.rect(screen, color, rect, 1)
                     # and its name
                     t = debug_font.render(name, True, (255, 255, 255))
@@ -424,7 +401,7 @@ def main(
         if remaining < 0 and time() - last_rung > ring_every and nb_rings != ring_count:
             last_rung = time()
             nb_rings += 1
-            play(bell)
+            pygame_utils.play(bell)
             if restart:
                 timer_end = initial_duration + (round(time() + 0.5) - start)
 

@@ -1,13 +1,10 @@
 """
-This file countains a lot of small, independent utility functions, mostly to
-convert times, format strings, process pygame events and perform other small
-conversions.
+This file countains a lot of small utility functions, to convert times
+to multiple string formats and back.
 """
 
-from random import random
 from time import time
 from datetime import datetime
-import pygame
 
 
 def fmt_duration(seconds):
@@ -99,26 +96,6 @@ def compute_timer_end(timer, start):
     return timer + (round(time() + 0.5) - start)
 
 
-def shorten(text: str, max_len: int) -> str:
-    """Shorten a text to max_len characters, adding ... if necessary."""
-    if len(text) <= max_len:
-        return text
-    return text[: max_len - 3] + "..."  # 3 for the ...
-
-
-def color_from_name(name: str) -> tuple[int, int, int]:
-    instance = random.Random(name)
-    return instance.randint(0, 255), instance.randint(0, 255), instance.randint(0, 255)
-
-
-def clamp(value, mini, maxi):
-    if value < mini:
-        return mini
-    if value > maxi:
-        return maxi
-    return value
-
-
 def human_duration(duration: str) -> int:
     """Convert a human duration such as "1h 30m" to seconds."""
 
@@ -135,11 +112,3 @@ def human_duration(duration: str) -> int:
             raise ValueError(f"Invalid duration part: {part}")
 
     return total
-
-
-def shift_is_pressed(event):
-    return event.mod & pygame.KMOD_SHIFT
-
-
-def get_number_from_key(key):
-    return int(pygame.key.name(key))

@@ -3,27 +3,19 @@ This file contains code to handle platform specific code.
 It covers functionnalities such as manipulating windows.
 """
 
+import os
 import subprocess
 import warnings
 
 import pygame
 
-from .utils import clamp
-from .constants import MIN_HEIGHT, MIN_WIDTH, RUNS_ON_SWAY
 
+# Diego uses sway, and it needs a few tweaks as it's a non-standard window manager.
+RUNS_ON_SWAY = os.environ.get("SWAYSOCK") is not None
 
-def adjust_window_size(window, scale_factor: float):
-    display_info = pygame.display.Info()
-    max_width = display_info.current_w
-    max_height = display_info.current_h
-
-    new_width = window.size[0] * scale_factor
-    new_height = window.size[1] * scale_factor
-
-    clamped_new_width = clamp(new_width, MIN_WIDTH, max_width)
-    clamped_new_height = clamp(new_height, MIN_HEIGHT, max_height)
-
-    window.size = clamped_new_width, clamped_new_height
+# Diego's version of pygame-ce fails to run directly on Wayland, so I force it to use X11.
+if os.environ.get("SDL_VIDEODRIVER") == "wayland":
+    os.environ["SDL_VIDEODRIVER"] = "x11"
 
 
 def place_window(window, x: int, y: int):
