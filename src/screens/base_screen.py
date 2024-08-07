@@ -7,6 +7,7 @@ import luckypot
 
 from ..purpose import Purpose
 from ..config import PucotiConfig
+from ..server import UserData
 
 
 @dataclass
@@ -15,6 +16,7 @@ class Context:
     app: luckypot.App
     history_file: Path
     purpose_history: list[Purpose]
+    friend_activity: list[UserData]
 
     def __init__(self, config: PucotiConfig, app: luckypot.App):
         self.config = config
@@ -29,6 +31,7 @@ class Context:
             for line in self.history_file.read_text().splitlines()
             if line.strip()
         ]
+        self.friend_activity = []
 
     def set_purpose(self, purpose: str):
         if not self.purpose_history or purpose != self.purpose_history[-1].text:

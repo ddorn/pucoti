@@ -14,7 +14,7 @@ from .. import constants
 from ..callback import CountdownCallback
 from ..server import UpdateRoomRequest, send_update
 from .base_screen import PucotiScreen, Context
-from . import help_screen, purpose_history_screen
+from . import help_screen, purpose_history_screen, social_screen
 from ..dfont import DFont
 
 
@@ -31,19 +31,16 @@ class MainScreen(PucotiScreen):
 
         self.hide_totals = False
 
-        ctx.set_purpose("")
-
         self.purpose_editor = TextEdit(
             initial_value=ctx.purpose_history[-1].text,
             color=ctx.config.color.purpose,
             font=ctx.config.font.normal,
             submit_callback=self.set_purpose,
         )
-        self.social_data = []
 
     def set_purpose(self, purpose):
         self.ctx.set_purpose(purpose)
-        self.social_data = self.update_servers()
+        self.update_servers()
 
     @property
     def purpose(self):
@@ -52,6 +49,11 @@ class MainScreen(PucotiScreen):
     @property
     def purpose_start_time(self):
         return round(self.ctx.purpose_history[-1].timestamp)
+
+    def on_enter(self):
+        super().on_enter()
+        # Not in __init__ because the context is set after the state is pushed.
+        self.set_purpose("")
 
     def on_exit(self):
         self.ctx.set_purpose("")
@@ -111,6 +113,8 @@ class MainScreen(PucotiScreen):
                 self.push_state(help_screen.HelpScreen())
             case pg.K_l:
                 self.push_state(purpose_history_screen.PurposeHistoryScreen())
+            case pg.K_s:
+                self.push_state(social_screen.SocialScreen())
             case _:
                 return super().handle_event(event)
         return True
@@ -203,7 +207,7 @@ class MainScreen(PucotiScreen):
 
             def send_update_thread():
                 data = send_update(social.server, social.room, constants.USER_ID, payload)
-                self.social_data = data
+                self.ctx.friend_activity = data
                 pprint(data)
 
             threading.Thread(target=send_update_thread).start()
@@ -243,6 +247,10 @@ class TextEdit:
             elif event.key in (pg.K_RETURN, pg.K_KP_ENTER, pg.K_ESCAPE):
                 self.submit_callback(self.text)
                 self.editing = False
+                return True
+            elif event.unicode:
+                # There are duplicate events for TEXTINPUT and KEYDOWN, so we
+                # need to filter them out.
                 return True
 
         return False

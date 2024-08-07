@@ -1,9 +1,11 @@
 from pathlib import Path
 from time import time
-from typing import Annotated
+from typing import Annotated, Callable
+import threading
+
+import requests
 import fastapi
 from pydantic import BaseModel
-import requests
 
 
 DATA = Path(__file__).parent.parent / "data"
@@ -81,3 +83,18 @@ def send_update(
             print(response.text)
         return []
     return [UserData.model_validate(user_data) for user_data in response.json()]
+
+
+def send_update_thread(
+    server_url: str,
+    room_id: str,
+    user_id: str,
+    data: UpdateRoomRequest,
+    callback: Callable[[list[UserData]], None],
+) -> None:
+
+    def send_update_thread_inner():
+        friends = send_update(server_url, room_id, user_id, data)
+        callback(friends)
+
+    threading.Thread(target=send_update_thread_inner).start()
