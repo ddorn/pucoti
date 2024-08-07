@@ -68,3 +68,13 @@ clean:
 
 distclean: clean
 	rm -r dist
+
+
+deploy:
+	# Push files by ssh to hyperion in ./pucoti
+	git ls-files | rsync -avz --files-from=- . hyperion:pucoti
+	# Restart the service
+	# ssh hyperion "systemctl restart pucoti"
+
+server:
+	poetry run uvicorn src.server:app --reload --port 9123
