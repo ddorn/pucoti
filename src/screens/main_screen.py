@@ -1,5 +1,6 @@
 import re
 from time import time
+from typing import Callable
 
 import pygame
 import pygame.locals as pg
@@ -9,8 +10,10 @@ from .. import time_utils
 from .. import pygame_utils
 from .. import constants
 from ..callback import CountdownCallback
+from ..server import UpdateRoomRequest, send_update
 from .base_screen import PucotiScreen, Context
 from . import help_screen, purpose_history_screen
+from ..dfont import DFont
 
 
 class MainScreen(PucotiScreen):
@@ -26,9 +29,18 @@ class MainScreen(PucotiScreen):
 
         self.hide_totals = False
 
-        self.purpose_editor = PurposeEditor(ctx)
-
         ctx.set_purpose("")
+
+        self.purpose_editor = TextEdit(
+            initial_value=ctx.purpose_history[-1].text,
+            color=ctx.config.color.purpose,
+            font=ctx.config.font.normal,
+            submit_callback=self.set_purpose,
+        )
+
+    def set_purpose(self, purpose):
+        self.ctx.set_purpose(purpose)
+        self.update_servers()
 
     @property
     def purpose(self):
@@ -175,12 +187,31 @@ class MainScreen(PucotiScreen):
         if purpose_rect := layout.get("purpose"):
             self.purpose_editor.draw(gfx, purpose_rect)
 
+    def update_servers(self):
+        social = self.config.social
+        if social.enabled:
+            payload = UpdateRoomRequest(
+                username=social.username,
+                timer_end=self.timer_end,
+                start=self.start,
+                purpose=self.purpose if social.send_purpose else None,
+                purpose_start=self.purpose_start_time if social.send_purpose else None,
+            )
+            send_update(social.server, social.room, constants.USER_ID, payload)
 
-class PurposeEditor:
-    def __init__(self, ctx: Context) -> None:
-        super().__init__()
-        self.ctx = ctx
-        self.purpose = ctx.purpose_history[-1].text
+
+class TextEdit:
+    def __init__(
+        self,
+        initial_value: str,
+        color,
+        font: DFont,
+        submit_callback: Callable[[str], None] = lambda text: None,
+    ) -> None:
+        self.color = color
+        self.font = font
+        self.submit_callback = submit_callback
+        self.text = initial_value
         self.editing = False
 
     def handle_event(self, event) -> bool:
@@ -191,30 +222,28 @@ class PurposeEditor:
             return False
 
         if event.type == pg.TEXTINPUT:
-            self.purpose += event.text
+            self.text += event.text
             return True
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_BACKSPACE:
                 if event.mod & pg.KMOD_CTRL:
-                    self.purpose = re.sub(r"\S*\s*$", "", self.purpose)
+                    self.text = re.sub(r"\S*\s*$", "", self.text)
                 else:
-                    self.purpose = self.purpose[:-1]
+                    self.text = self.text[:-1]
                 return True
             elif event.key in (pg.K_RETURN, pg.K_KP_ENTER, pg.K_ESCAPE):
-                self.ctx.set_purpose(self.purpose)
+                self.submit_callback(self.text)
                 self.editing = False
                 return True
 
         return False
 
     def draw(self, gfx: GFX, rect: pygame.Rect):
-        t = self.ctx.config.font.normal.render(
-            self.purpose, rect.size, self.ctx.config.color.purpose
-        )
+        t = self.font.render(self.text, rect.size, self.color)
         r = gfx.blit(t, center=rect.center)
         if self.editing and (time() % 1) < 0.7:
             if r.height == 0:
                 r.height = rect.height
             if r.right >= rect.right:
                 r.right = rect.right - 3
-            pygame.draw.line(gfx.surf, self.ctx.config.color.purpose, r.topright, r.bottomright, 2)
+            pygame.draw.line(gfx.surf, self.color, r.topright, r.bottomright, 2)

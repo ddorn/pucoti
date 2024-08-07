@@ -1,9 +1,8 @@
 from functools import cached_property
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import Annotated
 
-import typer
 
 from src import constants
 from src.dfont import DFont
@@ -55,6 +54,18 @@ class WindowConfig(Config):
 
 
 @dataclass(frozen=True)
+class SocialConfig(Config):
+    """To share your timer with others"""
+
+    room: str = "public"
+    username: str = ""
+    enabled: bool = False
+    send_purpose: bool = True
+    # server: str = "https://pucoti.therandom.space/"
+    server: str = "http://localhost:8000/"
+
+
+@dataclass(frozen=True)
 class PucotiConfig(Config):
     """
     The main configuration for PUCOTI.
@@ -78,26 +89,4 @@ class PucotiConfig(Config):
     color: ColorConfig = ColorConfig()
     window: WindowConfig = WindowConfig()
     run_at: list[RunAtConfig] = field(default_factory=list)
-
-
-if __name__ == "__main__":
-    conf_content = PucotiConfig.generate_default_config_yaml()
-    # print(conf_content)
-
-    data = PucotiConfig.load(conf_content)
-    # print(data)
-    # print(PucotiConfig())
-
-    assert asdict(data) == asdict(PucotiConfig())
-
-    @PucotiConfig.mk_typer_cli("initial_timer")
-    def main(config):
-        print(config)
-        from pprint import pprint
-
-        pprint(asdict(config))
-
-    app = typer.Typer(add_completion=False)
-    app.command()(main)
-
-    app()
+    social: SocialConfig = SocialConfig()

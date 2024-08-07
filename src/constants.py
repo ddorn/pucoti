@@ -1,4 +1,5 @@
 import os
+import uuid
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
@@ -6,6 +7,7 @@ import pygame.locals as pg
 from pathlib import Path
 
 
+USER_ID = str(uuid.uuid4())
 CONFIG_FILE = Path("~/.config/pucoti/default.yaml").expanduser()
 ASSETS = Path(__file__).parent.parent / "assets"
 BELL = ASSETS / "bell.mp3"
