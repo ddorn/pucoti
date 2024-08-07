@@ -11,7 +11,7 @@ from pydantic import BaseModel
 DATA = Path(__file__).parent.parent / "data"
 DATA.mkdir(exist_ok=True)
 
-OLD_DATA_CLEANUP = 5 * 60  # 5 minutes
+OLD_DATA_CLEANUP = 1 * 60  # 1 minute
 
 app = fastapi.FastAPI()
 
