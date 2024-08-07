@@ -1,15 +1,9 @@
-from functools import partial
 from pathlib import Path
-from pprint import pprint
 from typing import Annotated, Any, Self, TypeAliasType, get_origin
 from dataclasses import dataclass, fields, MISSING
 from textwrap import dedent, indent
 
 import yaml
-import typer
-import inspect
-
-from src import constants
 
 
 AnnotatedType = type(Annotated[int, "dummy"])
@@ -58,12 +52,6 @@ class Config:
                 expected_type = expected_type.__value__
 
             if Config.is_config(expected_type):
-                if issubclass(expected_type, SingleArgConfig) and isinstance(data, str):
-                    converted_data = expected_type.from_string(data)
-                    if not is_inside_list:
-                        to_update[path] = converted_data
-                    return converted_data
-
                 fields_by_name = {field.name: field for field in fields(expected_type)}
                 converted_data = {}
                 for name, value in data.items():
@@ -132,6 +120,8 @@ class Config:
     def is_config(type_hint):
         if isinstance(type_hint, AnnotatedType):
             type_hint = type_hint.__origin__
+        if not isinstance(type_hint, type):
+            return False
         return issubclass(type_hint, Config)
 
     @classmethod
@@ -146,8 +136,6 @@ class Config:
                 # If base_type can be prompted in a single are (like int, str, etc)
                 # Then we can make this a parameter
                 if base_type in (str, int, float, Path, bool):
-                    params[prefix + fld.name] = fld.type
-                elif cls.is_config(base_type) and issubclass(base_type, SingleArgConfig):
                     params[prefix + fld.name] = fld.type
 
             elif get_origin(fld.type) is dict:
@@ -210,6 +198,8 @@ class Config:
 
         Does not perform any validation of paths nor types. For this, use .load()
         """
+        if isinstance(values, type(self)):
+            return values
 
         kwargs = {}
         for field in fields(self):
@@ -230,121 +220,33 @@ class Config:
         return obj
 
     @classmethod
-    def mk_typer_cli(cls, *arguments: str):
-        """Return a function that with the signature that expects typer for @app.command().
+    def get_field(cls, name: str):
+        """Recursively get the field at the given path."""
 
-        Any name passed in `argument` will be passed to typer as argument, the rest as options.
-        Arguments of type list/tuple/dict are not supported and are silently skipped.
-
-        Use as:
-
-        @app.command()
-        @Config.mk_typer_cli("arg1", "arg2"):
-        def main(config: Config):
-            ...
-        """
-
-        # Gather all parameters
-        params = cls.gather_parameters()
-
-        signature = {}
-        for name, typ in params.items():
-            if name in arguments:
-                param_type = typer.Argument
-            else:
-                param_type = typer.Option
-
-            if isinstance(typ, AnnotatedType):
-                help = typ.__metadata__[0]
-                typ = typ.__origin__
-            else:
-                help = None
-
-            if "." in name:
-                rich_panel = name.split(".", 1)[0].title()
-            else:
-                rich_panel = None
-
-            # Handle list[SingleArgConfig]
-            if get_origin(typ) is list:
-                inner_type = typ.__args__[0]
-                if cls.is_config(inner_type) and issubclass(inner_type, SingleArgConfig):
-                    help = help or typ.__args__[0].help_message()
-                    typ = list[inner_type]
-                    param_type = partial(param_type, parser=inner_type.from_string)
-
-            signature[name] = Annotated[typ, param_type(help=help, rich_help_panel=rich_panel)]
-
-        normalised_to_true_name = {}
-        for name in signature:
-            normalised = name.replace(".", "_")
-            if normalised in normalised_to_true_name:
-                raise ValueError(f"There are two config fields that normalise to {normalised}")
-            normalised_to_true_name[normalised] = name
-
-        defaults = cls()
-        new_signature = inspect.Signature(
-            [
-                inspect.Parameter(
-                    name=name.replace(".", "_"),
-                    kind=inspect._ParameterKind.KEYWORD_ONLY,
-                    default=defaults.get(name),
-                    annotation=typ,
-                )
-                for name, typ in signature.items()
-            ]
-        )
-
-        # Create the function
-        def decorator(f):
-            def decorated(**kwargs):
-                try:
-                    config = cls().load(constants.CONFIG_FILE)
-                except FileNotFoundError:
-                    print(f"Config file not found at {constants.CONFIG_FILE}")
-                    config = cls()
-
-                params_overwritten_by_cli = {
-                    normalised_to_true_name[name]: value for name, value in kwargs.items()
-                }
-
-                config = config.merge(params_overwritten_by_cli)
-                return f(config)
-
-            decorated.__signature__ = new_signature
-            return decorated
-
-        return decorator
-
-
-@dataclass(frozen=True)
-class SingleArgConfig(Config):
-    """A config that can be input as a single typer argument."""
-
-    SEPARATOR = ":"
+        obj = cls
+        for part in name.split("."):
+            field = next(fld for fld in fields(obj) if fld.name == part)
+            obj = field.type
+        return field
 
     @classmethod
-    def help_message(cls) -> str:
-        """Return a message to be shown in the help message of the CLI."""
+    def doc_for(cls, name: str):
+        """Return the docstring for the field at the given path."""
 
-        fmt = cls.SEPARATOR.join(field.name for field in fields(cls))
+        field = cls.get_field(name)
 
-        if base := cls.user_defined_docstring():
-            base += " "
+        if get_origin(field.type) is list:
+            typ = field.type.__args__[0]
         else:
-            base = ""
-        return f"{base}Format: {fmt}"
+            typ = field.type
 
-    @classmethod
-    def from_string(cls, string: str) -> Self:
-        """Parse a string into the config."""
+        if isinstance(typ, AnnotatedType):
+            return typ.__metadata__[0]
+        elif cls.is_config(typ) and issubclass(typ, Config):  # second check if for mypy
+            return typ.user_defined_docstring()
 
-        args = string.split(cls.SEPARATOR)
-        kwargs = {}
-        for arg, field in zip(args, fields(cls), strict=True):
-            kwargs[field.name] = arg
-
-        return cls().load(kwargs)
+        print(typ)
+        return None
 
 
 def to_nice_yaml(name: str, obj):

@@ -19,8 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from pprint import pprint
+from typing import Annotated
 import typer
+from click.core import ParameterSource
 
 
 # By default pygame prints its version to the console when imported. We deactivate that.
@@ -32,7 +33,7 @@ import luckypot
 
 
 from src import constants
-from src.config import PucotiConfig
+from src.config import PucotiConfig, RunAtConfig, SocialConfig
 from src.screens.base_screen import PucotiScreen, Context
 from src.screens.start_screen import StartScreen
 from src import platforms
@@ -114,6 +115,21 @@ class App(luckypot.App[PucotiScreen]):
         state.ctx = self.ctx
 
 
+defaults = PucotiConfig()
+
+
+def doc(name: str, argument: bool = False, **kwargs):
+    if argument:
+        cls = typer.Argument
+    else:
+        cls = typer.Option
+
+    if help_ := PucotiConfig.doc_for(name):
+        kwargs["help"] = help_ + kwargs.get("help", "")
+
+    return cls(**kwargs)
+
+
 app = typer.Typer(add_completion=False)
 
 
@@ -121,9 +137,22 @@ app = typer.Typer(add_completion=False)
     help="Stay on task with PUCOTI, a countdown timer built for simplicity and purpose.\n\nGUI Shortcuts:\n\n"
     + constants.SHORTCUTS.replace("\n", "\n\n")
 )
-@PucotiConfig.mk_typer_cli("initial_timer")
-def main(config: PucotiConfig) -> None:
-    pprint(config)
+def main(
+    # fmt: off
+    ctx: typer.Context,
+    initial_timer: Annotated[str, doc("initial_timer", argument=True)] = defaults.initial_timer,
+    restart: Annotated[bool, doc("restart")] = defaults.restart,
+    run_at: Annotated[list[RunAtConfig], doc("run_at", help=" E.g. '-1m:suspend'", parser=RunAtConfig.from_string)] = [],
+    borderless: Annotated[bool, doc("window.borderless")] = defaults.window.borderless,
+    social: Annotated[SocialConfig, typer.Option(help="Share timer online. Fmt: 'usernam@room'", parser=SocialConfig.from_string)] = None,
+    # fmt: on
+) -> None:
+    config = PucotiConfig()
+
+    for param, source in ctx._parameter_source.items():
+        if source == ParameterSource.COMMANDLINE:
+            print(param, source, "value", ctx.params[param])
+            config = config.merge({param: ctx.params[param]})
 
     App(config).run()
 

@@ -1,21 +1,26 @@
 from functools import cached_property
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Annotated
+from typing import Annotated, Self
 
 
 from src import constants
 from src.dfont import DFont
-from src.base_config import Config, SingleArgConfig
+from src.base_config import Config
 
 
 @dataclass(frozen=True)
-class RunAtConfig(SingleArgConfig):
+class RunAtConfig(Config):
     """Run commands at specific times."""
 
     at: str = "-1m"
     cmd: str = "notify-send 'Time is up by one minute!'"
     # every: str | None = None
+
+    @classmethod
+    def from_string(cls, string: str) -> Self:
+        at, cmd = string.split(":", 1)
+        return cls(at=at, cmd=cmd)
 
 
 @dataclass(frozen=True)
@@ -64,6 +69,11 @@ class SocialConfig(Config):
     # server: str = "https://pucoti.therandom.space/"
     server: str = "http://localhost:8000/"
 
+    @classmethod
+    def from_string(cls, string: str) -> Self:
+        username, room = string.split("@", 1)
+        return cls(username=username, room=room, enabled=True)
+
 
 @dataclass(frozen=True)
 class PucotiConfig(Config):
@@ -75,7 +85,7 @@ class PucotiConfig(Config):
     """
 
     # preset: str = "default"
-    initial_timer: Annotated[str, "The initial timer duration"] = "5m"
+    initial_timer: Annotated[str, "The initial timer duration (e.g. '2m 30s')"] = "5m"
     bell: Annotated[Path, "Path to the file played when time is up"] = constants.BELL
     ring_every: Annotated[int, "Time between bells, in seconds"] = 20
     ring_count: Annotated[int, "Number of bells played when the time is up. -1 means no limit."] = (
