@@ -1,8 +1,10 @@
+from time import time
 from luckypot import GFX
 import pygame
 
 from .base_screen import PucotiScreen
 from ..pygame_utils import split_rect
+from ..time_utils import fmt_duration
 
 
 class SocialScreen(PucotiScreen):
@@ -11,7 +13,12 @@ class SocialScreen(PucotiScreen):
         r = self.available_rect()
 
         # Split the rect into n sub-rect
-        return split_rect(r, *[1] * n, horizontal=False)
+        return split_rect(r, *[1] * n)
+
+    def layout_one(self, rect: pygame.Rect):
+        user, time, totals = split_rect(rect, 1, 2, 1)
+        total, _, purpose_total = split_rect(totals, 1, 0.2, 1, horizontal=True)
+        return user, time, total, purpose_total
 
     def draw(self, gfx: GFX):
         super().draw(gfx)
@@ -31,8 +38,34 @@ class SocialScreen(PucotiScreen):
                 text = f"{friend.username}: {friend.purpose}"
             else:
                 text = friend.username
+            remaining = friend.timer_end - (time() - friend.start)
 
-            gfx.blit(font.render(text, rect.size, self.config.color.purpose), center=rect.center)
+            user_r, time_r, total_r, purpose_total_r = self.layout_one(rect)
+
+            gfx.blit(
+                font.render(text, user_r.size, self.config.color.purpose), center=user_r.center
+            )
+            gfx.blit(
+                font.render(fmt_duration(remaining), time_r.size, self.config.color.timer),
+                center=time_r.center,
+            )
+            gfx.blit(
+                font.render(
+                    fmt_duration(time() - friend.start),
+                    total_r.size,
+                    self.config.color.total_time,
+                ),
+                midleft=total_r.midleft,
+            )
+            if friend.purpose_start:
+                gfx.blit(
+                    font.render(
+                        fmt_duration(time() - friend.purpose_start),
+                        purpose_total_r.size,
+                        self.config.color.purpose,
+                    ),
+                    midright=purpose_total_r.midright,
+                )
 
     def handle_event(self, event) -> bool:
         if super().handle_event(event):
