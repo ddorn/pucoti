@@ -300,6 +300,7 @@ class Config:
                 try:
                     config = cls().load(constants.CONFIG_FILE)
                 except FileNotFoundError:
+                    print(f"Config file not found at {constants.CONFIG_FILE}")
                     config = cls()
 
                 params_overwritten_by_cli = {

@@ -11,5 +11,5 @@ class Purpose:
     timestamp: float = dataclasses.field(default_factory=time)
 
     def add_to_history(self, history_file: Path):
-        with history_file.open("a") as f:
+        with history_file.expanduser().open("a") as f:
             f.write(json.dumps(self.__dict__) + "\n")
