@@ -41,10 +41,10 @@ def delete_old_data(folder: Path, max_age_seconds: int):
 @app.put("/room/{room_id}/user/{user_id}", response_model=list[UserData])
 async def update(
     room_id: Annotated[
-        str, fastapi.Path(min_length=1, max_length=30, pattern=r"^[a-zA-Z0-9_+ -]+$")
+        str, fastapi.Path(min_length=1, max_length=40, pattern=r"^[a-zA-Z0-9_+ -]+$")
     ],
     user_id: Annotated[
-        str, fastapi.Path(min_length=1, max_length=30, pattern=r"^[a-zA-Z0-9_+ -]+$")
+        str, fastapi.Path(min_length=1, max_length=40, pattern=r"^[a-zA-Z0-9_+ -]+$")
     ],
     request: UpdateRoomRequest,
 ):
@@ -70,5 +70,14 @@ async def update(
     return sorted(room_data.values(), key=lambda x: x.username)
 
 
-def send_update(server_url: str, room_id: str, user_id: str, data: UpdateRoomRequest):
-    requests.put(f"{server_url}/room/{room_id}/user/{user_id}", json=data.model_dump())
+def send_update(
+    server_url: str, room_id: str, user_id: str, data: UpdateRoomRequest
+) -> list[UserData]:
+    response = requests.put(f"{server_url}/room/{room_id}/user/{user_id}", json=data.model_dump())
+    if response.status_code != 200:
+        try:
+            print(response.json())
+        except Exception:
+            print(response.text)
+        return []
+    return [UserData.model_validate(user_data) for user_data in response.json()]

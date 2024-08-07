@@ -1,6 +1,8 @@
+from pprint import pprint
 import re
 from time import time
 from typing import Callable
+import threading
 
 import pygame
 import pygame.locals as pg
@@ -37,10 +39,11 @@ class MainScreen(PucotiScreen):
             font=ctx.config.font.normal,
             submit_callback=self.set_purpose,
         )
+        self.social_data = []
 
     def set_purpose(self, purpose):
         self.ctx.set_purpose(purpose)
-        self.update_servers()
+        self.social_data = self.update_servers()
 
     @property
     def purpose(self):
@@ -197,7 +200,13 @@ class MainScreen(PucotiScreen):
                 purpose=self.purpose if social.send_purpose else None,
                 purpose_start=self.purpose_start_time if social.send_purpose else None,
             )
-            send_update(social.server, social.room, constants.USER_ID, payload)
+
+            def send_update_thread():
+                data = send_update(social.server, social.room, constants.USER_ID, payload)
+                self.social_data = data
+                pprint(data)
+
+            threading.Thread(target=send_update_thread).start()
 
 
 class TextEdit:

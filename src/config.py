@@ -66,8 +66,7 @@ class SocialConfig(Config):
     username: str = ""
     enabled: bool = False
     send_purpose: bool = True
-    # server: str = "https://pucoti.therandom.space/"
-    server: str = "http://localhost:8000/"
+    server: str = "https://pucoti.therandom.space"
 
     @classmethod
     def from_string(cls, string: str) -> Self:
