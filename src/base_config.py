@@ -172,12 +172,14 @@ class Config:
         for fld in fields(cls):
             try:
                 doc = fld.type.__metadata__[0]
+                out.append("\n")
                 add_comment(doc)
             except AttributeError:
                 pass
 
             if cls.is_config(fld.type):
                 # assert issubclass(fld.type, Config)
+                out.append("\n")
                 out.append(f"{fld.name}:")
                 out.append(indent(fld.type.generate_default_config_yaml(), "  "))
                 continue
@@ -245,7 +247,6 @@ class Config:
         elif cls.is_config(typ) and issubclass(typ, Config):  # second check if for mypy
             return typ.user_defined_docstring()
 
-        print(typ)
         return None
 
 

@@ -118,6 +118,12 @@ class App(luckypot.App[PucotiScreen]):
 defaults = PucotiConfig()
 
 
+def print_config(value: bool):
+    if value:
+        print(PucotiConfig.generate_default_config_yaml())
+        raise typer.Exit()
+
+
 def doc(name: str, argument: bool = False, **kwargs):
     if argument:
         cls = typer.Argument
@@ -145,6 +151,7 @@ def main(
     run_at: Annotated[list[RunAtConfig], doc("run_at", help=" E.g. '-1m:suspend'", parser=RunAtConfig.from_string)] = [],
     borderless: Annotated[bool, doc("window.borderless")] = defaults.window.borderless,
     social: Annotated[SocialConfig, typer.Option(help="Share timer online. Fmt: 'usernam@room'", parser=SocialConfig.from_string)] = None,
+    print_config: Annotated[bool, typer.Option("--print-config", help="Print the configuration and exit", callback=print_config, is_eager=True)] = False,
     # fmt: on
 ) -> None:
     config = PucotiConfig()

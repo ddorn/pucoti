@@ -62,9 +62,9 @@ class WindowConfig(Config):
 class SocialConfig(Config):
     """To share your timer with others"""
 
+    enabled: bool = False
     room: str = "public"
     username: str = ""
-    enabled: bool = False
     send_purpose: bool = True
     server: str = "https://pucoti.therandom.space"
 
@@ -80,16 +80,17 @@ class PucotiConfig(Config):
     The main configuration for PUCOTI.
 
     This file should be placed at ~/.config/pucoti/config.yaml.
-    You can have multiple presets, by separating the yaml documents with "---".
     """
+
+    # You can have multiple presets, by separating the yaml documents with "---".
 
     # preset: str = "default"
     initial_timer: Annotated[str, "The initial timer duration (e.g. '2m 30s')"] = "5m"
     bell: Annotated[Path, "Path to the file played when time is up"] = constants.BELL
+    ring_count: Annotated[
+        int, "Number of times the bells plays when the time is up. -1 means no limit."
+    ] = -1
     ring_every: Annotated[int, "Time between bells, in seconds"] = 20
-    ring_count: Annotated[int, "Number of bells played when the time is up. -1 means no limit."] = (
-        -1
-    )
     restart: Annotated[bool, "Restart the timer when it reaches 0"] = False
     history_file: Annotated[Path, "Path to save the history of purposes"] = Path(
         "~/.pucoti_history"
