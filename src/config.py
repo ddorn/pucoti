@@ -51,6 +51,7 @@ class ColorConfig(Config):
 class WindowConfig(Config):
     initial_position: tuple[int, int] = (-5, -5)
     initial_size: tuple[int, int] = (220, 80)
+    borderless: bool = True
 
 
 @dataclass(frozen=True)
