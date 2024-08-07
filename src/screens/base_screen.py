@@ -33,8 +33,8 @@ class Context:
         ]
         self.friend_activity = []
 
-    def set_purpose(self, purpose: str):
-        if not self.purpose_history or purpose != self.purpose_history[-1].text:
+    def set_purpose(self, purpose: str, force: bool = False):
+        if force or not self.purpose_history or purpose != self.purpose_history[-1].text:
             self.purpose_history.append(Purpose(purpose))
             self.purpose_history[-1].add_to_history(self.config.history_file)
 

@@ -30,6 +30,7 @@ class MainScreen(PucotiScreen):
         self.callbacks = [CountdownCallback(cfg) for cfg in ctx.config.run_at]
 
         self.hide_totals = False
+        ctx.set_purpose("", force=True)
 
         self.purpose_editor = TextEdit(
             initial_value=ctx.purpose_history[-1].text,
@@ -53,7 +54,7 @@ class MainScreen(PucotiScreen):
     def on_enter(self):
         super().on_enter()
         # Not in __init__ because the context is set after the state is pushed.
-        self.set_purpose("")
+        self.update_servers()
 
     def on_exit(self):
         self.ctx.set_purpose("")
