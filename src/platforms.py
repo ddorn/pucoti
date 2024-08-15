@@ -16,10 +16,6 @@ import pygame
 RUNS_ON_SWAY = os.environ.get("SWAYSOCK") is not None
 IS_MACOS = sys.platform == "darwin" or platform.system() == "Darwin"
 
-# Diego's version of pygame-ce fails to run directly on Wayland, so I force it to use X11.
-if os.environ.get("SDL_VIDEODRIVER") == "wayland":
-    os.environ["SDL_VIDEODRIVER"] = "x11"
-
 
 def place_window(window, x: int, y: int):
     """Place the window at the desired position."""

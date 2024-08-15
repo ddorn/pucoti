@@ -163,7 +163,6 @@ def main(
 
     for param, source in ctx._parameter_source.items():
         if source == ParameterSource.COMMANDLINE:
-            print(param, source, "value", ctx.params[param])
             config = config.merge({param: ctx.params[param]})
 
     App(config).run()
