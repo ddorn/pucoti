@@ -206,9 +206,8 @@ class Config:
         kwargs = {}
         for field in fields(self):
             if field.name not in values:
-                continue
-
-            if self.is_config(field.type):
+                kwargs[field.name] = getattr(self, field.name)
+            elif self.is_config(field.type):
                 kwargs[field.name] = getattr(self, field.name).merge(values[field.name])
             else:
                 kwargs[field.name] = values[field.name]
