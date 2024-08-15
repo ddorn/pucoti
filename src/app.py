@@ -159,10 +159,16 @@ def main(
     config_file: Annotated[Path, typer.Option("--config", help="Path to the configuration file")] = constants.CONFIG_FILE,
     # fmt: on
 ) -> None:
-    config = PucotiConfig().load(config_file)
+    config = PucotiConfig()
+    if config_file.exists():
+        config = config.load(config_file)
 
     for param, source in ctx._parameter_source.items():
         if source == ParameterSource.COMMANDLINE:
+            if param == "config_file":
+                if not config_file.exists():
+                    raise typer.BadParameter(f"File {config_file} does not exist.")
+                continue
             config = config.merge({param: ctx.params[param]})
 
     App(config).run()
