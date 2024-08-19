@@ -36,3 +36,4 @@ PUCOTI
 """.strip()
 
 NUMBER_KEYS = [pg.K_0, pg.K_1, pg.K_2, pg.K_3, pg.K_4, pg.K_5, pg.K_6, pg.K_7, pg.K_8, pg.K_9]
+UPDATE_SERVER_EVERY = 30  # seconds

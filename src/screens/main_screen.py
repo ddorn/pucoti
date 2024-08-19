@@ -39,6 +39,8 @@ class MainScreen(PucotiScreen):
             submit_callback=self.set_purpose,
         )
 
+        self.last_server_update = 0
+
     def set_purpose(self, purpose):
         self.ctx.set_purpose(purpose)
         self.update_servers()
@@ -80,6 +82,10 @@ class MainScreen(PucotiScreen):
         # And execute the callbacks.
         for callback in self.callbacks:
             callback.update(self.timer_end - (time() - self.start))
+
+        if self.last_server_update + constants.UPDATE_SERVER_EVERY < time():
+            self.last_server_update = time()
+            self.update_servers()
 
         return super().paused_logic()
 
