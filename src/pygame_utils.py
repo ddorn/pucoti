@@ -31,21 +31,29 @@ def play(sound):
     pygame.mixer.music.play()
 
 
-def split_rect(rect, *ratios, horizontal: bool = False):
+def split_rect(rect, *ratios, horizontal: bool = False, spacing: float = 0):
     """Split a rect vertically in ratios."""
-    total_ratio = sum(ratios)
+    total_ratio = sum(ratios) + spacing
     ratios = [r / total_ratio for r in ratios]
+    absolute_spacing = int(spacing * rect.height) / (len(ratios) - 1)
     cummulative_ratios = [0] + [sum(ratios[:i]) for i in range(1, len(ratios) + 1)]
     if horizontal:
         xs = [rect.left + int(rect.width * r) for r in cummulative_ratios]
-        return [
+        rects = [
             pygame.Rect(xs[i], rect.top, xs[i + 1] - xs[i], rect.height) for i in range(len(ratios))
         ]
+        # Add the spacing
+        for i in range(1, len(rects)):
+            rects[i].left += absolute_spacing * i
     else:
         ys = [rect.top + int(rect.height * r) for r in cummulative_ratios]
-        return [
+        rects = [
             pygame.Rect(rect.left, ys[i], rect.width, ys[i + 1] - ys[i]) for i in range(len(ratios))
         ]
+        # Add the spacing
+        for i in range(1, len(rects)):
+            rects[i].top += absolute_spacing * i
+    return rects
 
 
 def clamp(value, mini, maxi):

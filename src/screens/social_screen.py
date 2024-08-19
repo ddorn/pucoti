@@ -9,16 +9,21 @@ from ..time_utils import fmt_duration
 
 class SocialScreen(PucotiScreen):
 
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.vertical = True
+
     def layout(self, n: int):
         r = self.available_rect()
 
         # Split the rect into n sub-rect
-        return split_rect(r, *[1] * n)
+        return split_rect(r, *[1] * n, horizontal=not self.vertical, spacing=0.1)
 
     def layout_one(self, rect: pygame.Rect):
-        user, time, totals = split_rect(rect, 1, 2, 1)
-        total, _, purpose_total = split_rect(totals, 1, 0.2, 1, horizontal=True)
-        return user, time, total, purpose_total
+        user, time = split_rect(rect, 1, 2)
+        # total, _, purpose_total = split_rect(totals, 1, 0.2, 1, horizontal=True)
+        return user, time  # , total, purpose_total
 
     def draw(self, gfx: GFX):
         super().draw(gfx)
@@ -40,39 +45,49 @@ class SocialScreen(PucotiScreen):
                 text = friend.username
             remaining = friend.timer_end - (time() - friend.start)
 
-            user_r, time_r, total_r, purpose_total_r = self.layout_one(rect)
+            user_r, time_r = self.layout_one(rect)
+            # user_r, time_r, total_r, purpose_total_r = self.layout_one(rect)
 
             gfx.blit(
-                font.render(text, user_r.size, self.config.color.purpose), center=user_r.center
-            )
-            gfx.blit(
-                font.render(fmt_duration(remaining), time_r.size, self.config.color.timer),
-                center=time_r.center,
+                font.render(text, user_r.size, self.config.color.purpose, monospaced_time=True),
+                center=user_r.center,
             )
             gfx.blit(
                 font.render(
-                    fmt_duration(time() - friend.start),
-                    total_r.size,
-                    self.config.color.total_time,
+                    fmt_duration(remaining),
+                    time_r.size,
+                    self.config.color.timer,
+                    monospaced_time=True,
                 ),
-                midleft=total_r.midleft,
+                center=time_r.center,
             )
-            if friend.purpose_start:
-                gfx.blit(
-                    font.render(
-                        fmt_duration(time() - friend.purpose_start),
-                        purpose_total_r.size,
-                        self.config.color.purpose,
-                    ),
-                    midright=purpose_total_r.midright,
-                )
+            # gfx.blit(
+            #     font.render(
+            #         fmt_duration(time() - friend.start),
+            #         total_r.size,
+            #         self.config.color.total_time,
+            #     ),
+            #     midleft=total_r.midleft,
+            # )
+            # if friend.purpose_start:
+            #     gfx.blit(
+            #         font.render(
+            #             fmt_duration(time() - friend.purpose_start),
+            #             purpose_total_r.size,
+            #             self.config.color.purpose,
+            #         ),
+            #         midright=purpose_total_r.midright,
+            #     )
 
     def handle_event(self, event) -> bool:
         if super().handle_event(event):
             return True
 
         if event.type == pygame.KEYDOWN:
-            self.pop_state()
+            if event.key == pygame.K_v:
+                self.vertical = not self.vertical
+            else:
+                self.pop_state()
             return True
 
         return False
