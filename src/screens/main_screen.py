@@ -1,4 +1,3 @@
-from pprint import pprint
 import re
 from time import time
 from typing import Callable
@@ -215,7 +214,6 @@ class MainScreen(PucotiScreen):
             def send_update_thread():
                 data = send_update(social.server, social.room, constants.USER_ID, payload)
                 self.ctx.friend_activity = data
-                pprint(data)
 
             threading.Thread(target=send_update_thread).start()
 

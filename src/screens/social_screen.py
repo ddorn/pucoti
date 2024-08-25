@@ -31,7 +31,12 @@ class SocialScreen(PucotiScreen):
         font = self.ctx.config.font.normal
 
         if len(self.ctx.friend_activity) < 2:
-            text = "No friends are currently active."
+            if len(self.ctx.friend_activity) == 1:
+                text = "No friends are currently active."
+            elif not self.ctx.config.social.enabled:
+                text = "Use --social name@room to enable social features."
+            else:
+                text = "You're not online."
             rect = self.available_rect()
             gfx.blit(font.render(text, rect.size, self.config.color.purpose), center=rect.center)
             return
