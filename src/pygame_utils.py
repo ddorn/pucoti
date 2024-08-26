@@ -35,7 +35,10 @@ def split_rect(rect, *ratios, horizontal: bool = False, spacing: float = 0):
     """Split a rect vertically in ratios."""
     total_ratio = sum(ratios) + spacing
     ratios = [r / total_ratio for r in ratios]
-    absolute_spacing = int(spacing * rect.height) / (len(ratios) - 1)
+    if len(ratios) == 1:
+        absolute_spacing = 0
+    else:
+        absolute_spacing = int(spacing * rect.height) / (len(ratios) - 1)
     cummulative_ratios = [0] + [sum(ratios[:i]) for i in range(1, len(ratios) + 1)]
     if horizontal:
         xs = [rect.left + int(rect.width * r) for r in cummulative_ratios]
