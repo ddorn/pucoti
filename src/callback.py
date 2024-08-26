@@ -4,7 +4,6 @@ from src import time_utils
 from src.config import RunAtConfig
 
 
-
 class CountdownCallback:
     """Call a command once the timer goes below a specific time."""
 

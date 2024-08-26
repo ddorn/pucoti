@@ -138,6 +138,7 @@ def main(config: PucotiConfig) -> None:
 
     position = 0
     platforms.place_window(window, *config.window.initial_position)
+    platforms.set_window_to_sticky()
 
     initial_duration = time_utils.human_duration(config.initial_timer)
     start = round(time())
