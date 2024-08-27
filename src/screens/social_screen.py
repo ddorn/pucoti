@@ -12,7 +12,7 @@ class SocialScreen(PucotiScreen):
     def __init__(self) -> None:
         super().__init__()
 
-        self.vertical = True
+        self.vertical = False
 
     def layout(self, n: int):
         r = self.available_rect()
