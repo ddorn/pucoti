@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pucoti"
-version = "0.8.2"
+version = "0.8.3"
 description = "A Purposeful Countdown Timer"
 authors = ["ddorn <diego.dorn@free.fr>"]
 readme = "README.md"
