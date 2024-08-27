@@ -4,9 +4,9 @@ from dataclasses import dataclass, field
 from typing import Annotated, Self
 
 
-from src import constants
-from src.dfont import DFont
-from src.base_config import Config
+from . import constants
+from .dfont import DFont
+from .base_config import Config
 
 
 @dataclass(frozen=True)

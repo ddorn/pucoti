@@ -1,7 +1,7 @@
 import subprocess
 
-from src import time_utils
-from src.config import RunAtConfig
+from . import time_utils
+from .config import RunAtConfig
 
 
 class CountdownCallback:

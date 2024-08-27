@@ -3,8 +3,8 @@ from typing import Annotated
 
 import pytest
 
-from src import config
-from src.config import Config
+from pucoti import config
+from pucoti.config import Config
 
 
 @dataclass(frozen=True)

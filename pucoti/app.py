@@ -33,12 +33,12 @@ import pygame.locals as pg
 import luckypot
 
 
-from src import constants
-from src.config import PucotiConfig, RunAtConfig, SocialConfig
-from src.screens.base_screen import PucotiScreen, Context
-from src.screens.start_screen import StartScreen
-from src import platforms
-from src import pygame_utils
+from . import constants
+from . import platforms
+from . import pygame_utils
+from .config import PucotiConfig, RunAtConfig, SocialConfig
+from .screens.base_screen import PucotiScreen, Context
+from .screens.start_screen import StartScreen
 
 
 class App(luckypot.App[PucotiScreen]):

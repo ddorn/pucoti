@@ -77,4 +77,4 @@ deploy:
 	ssh hyperion "systemctl --user restart pucoti"
 
 server:
-	poetry run uvicorn src.server:app --reload --port 9123
+	poetry run uvicorn pucoti.server:app --reload --port 9123
