@@ -55,9 +55,9 @@ check_git_status:
 wheel:
 	poetry build
 
-patch: check_git_status poetry_patch commit_version_bump zip linux wheel
-minor: check_git_status poetry_minor commit_version_bump zip linux wheel
-major: check_git_status poetry_major commit_version_bump zip linux wheel
+patch: check_git_status poetry_patch commit_version_bump wheel
+minor: check_git_status poetry_minor commit_version_bump wheel
+major: check_git_status poetry_major commit_version_bump wheel
 
 publish:
 	poetry publish
