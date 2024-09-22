@@ -1,14 +1,13 @@
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
 name: Fly Deploy
-# This workflow works, but is a bit of a waste of resources,
-# as the server doesn't need re-deploying every time the code changes.
-# (because it's small and we usually don't make edits to it.)
-if: false
 on:
-  push:
-    branches:
-      - main
+  # This workflow works, but is a bit of a waste of resources,
+  # as the server doesn't need re-deploying every time the code changes.
+  # (because it's small and we usually don't make edits to it.)
+  # push:
+  #   branches:
+  #     - main
 jobs:
   deploy:
     name: Deploy app
