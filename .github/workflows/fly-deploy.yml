@@ -2,12 +2,12 @@
 
 name: Fly Deploy
 on:
-  # This workflow works, but is a bit of a waste of resources,
-  # as the server doesn't need re-deploying every time the code changes.
-  # (because it's small and we usually don't make edits to it.)
-  # push:
-  #   branches:
-  #     - main
+  # This workflow works, but is a bit of a waste of resources to trigger on every push.
+  # Indeed the server doesn't need re-deploying every time the code changes,
+  # because it's small and we usually don't make edits to it.
+  # So it's availaible only for manual triggering in the Actions tab of github.
+  workflow_dispatch:
+
 jobs:
   deploy:
     name: Deploy app
