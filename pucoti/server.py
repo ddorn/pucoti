@@ -9,7 +9,6 @@ from pydantic import BaseModel
 
 
 DATA = Path(__file__).parent.parent / "data"
-DATA.mkdir(exist_ok=True)
 
 OLD_DATA_CLEANUP = 1 * 60  # 1 minute
 
@@ -50,6 +49,7 @@ async def update(
     ],
     request: UpdateRoomRequest,
 ):
+    DATA.mkdir(exist_ok=True)
     # Delete old data (> OLD_DATA_CLEANUP seconds)
     delete_old_data(DATA, OLD_DATA_CLEANUP)
 
