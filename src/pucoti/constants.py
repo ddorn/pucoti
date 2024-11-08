@@ -9,7 +9,7 @@ from pathlib import Path
 
 USER_ID = str(uuid.uuid4())
 CONFIG_FILE = Path("~/.config/pucoti/default.yaml").expanduser()
-ASSETS = Path(__file__).parent.parent / "assets"
+ASSETS = Path(__file__).parent.parent.parent / "assets"
 BELL = ASSETS / "bell.mp3"
 BIG_FONT = ASSETS / "Bevan-Regular.ttf"
 FONT = BIG_FONT
