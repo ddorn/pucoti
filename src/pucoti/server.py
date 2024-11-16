@@ -1,11 +1,10 @@
 from pathlib import Path
 from time import time
-from typing import Annotated, Callable
-import threading
+from typing import Annotated
 
-import requests
 import fastapi
-from pydantic import BaseModel
+
+from .server_comunication import UpdateRoomRequest, UserData
 
 
 DATA = Path(__file__).parent.parent / "data"
@@ -13,18 +12,6 @@ DATA = Path(__file__).parent.parent / "data"
 OLD_DATA_CLEANUP = 1 * 60  # 1 minute
 
 app = fastapi.FastAPI()
-
-
-class UpdateRoomRequest(BaseModel):
-    username: str
-    timer_end: float
-    start: float
-    purpose: str | None = None
-    purpose_start: float | None = None
-
-
-class UserData(UpdateRoomRequest):
-    last_update: float
 
 
 def delete_old_data(folder: Path, max_age_seconds: int):
@@ -70,31 +57,3 @@ async def update(
     # We sort them to avoid leaking the order of the dict, which is enough to
     # leak user ids in a room
     return sorted(room_data.values(), key=lambda x: x.username)
-
-
-def send_update(
-    server_url: str, room_id: str, user_id: str, data: UpdateRoomRequest
-) -> list[UserData]:
-    response = requests.put(f"{server_url}/room/{room_id}/user/{user_id}", json=data.model_dump())
-    if response.status_code != 200:
-        try:
-            print(response.json())
-        except Exception:
-            print(response.text)
-        return []
-    return [UserData.model_validate(user_data) for user_data in response.json()]
-
-
-def send_update_thread(
-    server_url: str,
-    room_id: str,
-    user_id: str,
-    data: UpdateRoomRequest,
-    callback: Callable[[list[UserData]], None],
-) -> None:
-
-    def send_update_thread_inner():
-        friends = send_update(server_url, room_id, user_id, data)
-        callback(friends)
-
-    threading.Thread(target=send_update_thread_inner).start()

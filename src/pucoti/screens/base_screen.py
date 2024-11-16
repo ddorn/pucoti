@@ -7,7 +7,7 @@ import luckypot
 
 from ..purpose import Purpose
 from ..config import PucotiConfig
-from ..server import UserData
+from ..server_comunication import UserData
 
 
 @dataclass

@@ -11,7 +11,7 @@ from .. import time_utils
 from .. import pygame_utils
 from .. import constants
 from ..callback import CountdownCallback
-from ..server import UpdateRoomRequest, send_update
+from ..server_comunication import UpdateRoomRequest, send_update
 from .base_screen import PucotiScreen, Context
 from . import help_screen, purpose_history_screen, social_screen
 from ..dfont import DFont
