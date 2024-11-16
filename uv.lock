@@ -237,6 +237,7 @@ version = "0.8.3"
 source = { editable = "." }
 dependencies = [
     { name = "luckypot" },
+    { name = "pydantic" },
     { name = "pygame-ce" },
     { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
     { name = "pyyaml" },
@@ -256,6 +257,7 @@ server = [
 [package.metadata]
 requires-dist = [
     { name = "luckypot", specifier = ">=0.1.1" },
+    { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pygame-ce", specifier = ">=2.5.2" },
     { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'", specifier = "==10.3.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
