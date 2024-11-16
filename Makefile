@@ -38,7 +38,7 @@ version_major:
 
 commit_version_bump:
 	@echo "Bumped version to $$(hatch version)"
-	git add pyproject.toml
+	git add src/pucoti/version.py
 	git commit -m "chore: bump version to $$(hatch version)"
 	git tag -a "v$$(hatch version)" -m "v$$(hatch version)"
 
