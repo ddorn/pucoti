@@ -22,6 +22,7 @@ server = [
     "uvicorn>=0.32.0",
 ]
 dev = [
+    "hatch>=1.13.0",
     "pre-commit>=4.0.1",
 ]
 

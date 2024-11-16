@@ -3,44 +3,44 @@
 END=\033[0m
 GREEN=\033[34m
 
-all: linux zip
+# all: zip
 
 run:
-	@poetry run python pucoti.py
+	@uv run python pucoti.py
 
-mkdist:
-	@mkdir -p dist
+# mkdist:
+# 	@mkdir -p dist
 
-zip: mkdist
-	@echo -e "$(GREEN)Updating zip...$(END)"
-	@git ls-files | zip --filesync -r --names-stdin dist/pucoti.zip
+# zip: mkdist
+# 	@echo -e "$(GREEN)Updating zip...$(END)"
+# 	@git ls-files | zip --filesync -r --names-stdin dist/pucoti.zip
 
-linux: mkdist
-	@echo -e "$(GREEN)Building for linux...$(END)"
-	poetry run pyinstaller --noconsole --add-data assets/:assets --onefile pucoti.py
+# linux: mkdist
+# 	@echo -e "$(GREEN)Building for linux...$(END)"
+# 	poetry run pyinstaller --noconsole --add-data assets/:assets --onefile pucoti.py
 
 # For this to work on linux, I needed to download the python 32-bit installer and run it with wine
 # Then I had to install the deps (wine pip install .) and pyinstaller (wine pip install pyinstaller)
 # And make windows worked!
 
-windows: mkdist
-	@echo -e "$(GREEN)Building for windows...$(END)"
-	WINEDEBUG=-all wine pyinstaller.exe --noconsole --add-data assets\;assets --onefile pucoti.py
+# windows: mkdist
+# 	@echo -e "$(GREEN)Building for windows...$(END)"
+# 	WINEDEBUG=-all wine pyinstaller.exe --noconsole --add-data assets\;assets --onefile pucoti.py
 
-poetry_patch:
-	poetry version patch
+version_patch:
+	hatch version patch
 
-poetry_minor:
-	poetry version minor
+version_minor:
+	hatch version minor
 
-poetry_major:
-	poetry version major
+version_major:
+	hatch version major
 
 commit_version_bump:
-	@echo "Bumped version to $$(poetry version -s)"
+	@echo "Bumped version to $$(hatch version)"
 	git add pyproject.toml
-	git commit -m "chore: bump version to $$(poetry version -s)"
-	git tag -a "v$$(poetry version -s)" -m "v$$(poetry version -s)"
+	git commit -m "chore: bump version to $$(hatch version)"
+	git tag -a "v$$(hatch version)" -m "v$$(hatch version)"
 
 check_git_status:
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -53,11 +53,11 @@ check_git_status:
 
 
 wheel:
-	poetry build
+	hatch build -t wheel
 
-patch: check_git_status poetry_patch commit_version_bump wheel
-minor: check_git_status poetry_minor commit_version_bump wheel
-major: check_git_status poetry_major commit_version_bump wheel
+patch: check_git_status version_patch commit_version_bump wheel
+minor: check_git_status version_minor commit_version_bump wheel
+major: check_git_status version_major commit_version_bump wheel
 
 publish:
 	poetry publish
