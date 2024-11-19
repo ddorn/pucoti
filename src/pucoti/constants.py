@@ -5,14 +5,21 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
 import pygame.locals as pg
 from pathlib import Path
-
+import platformdirs
 
 USER_ID = str(uuid.uuid4())
-CONFIG_FILE = Path("~/.config/pucoti/default.yaml").expanduser()
+
+DIRS = platformdirs.PlatformDirs("pucoti", "ddorn", ensure_exists=True)
+CONFIG_PATH = Path(DIRS.user_config_dir) / "default.yaml"
+DATA_DIR = Path(DIRS.user_data_dir)
+DB_PATH = Path(DIRS.user_data_dir) / "pucoti.db"
+print(f"Configuration file: {CONFIG_PATH}")
+
 ASSETS = Path(__file__).parent / "assets"
 BELL = ASSETS / "bell.mp3"
 BIG_FONT = ASSETS / "Bevan-Regular.ttf"
 FONT = BIG_FONT
+
 WINDOW_SCALE = 1.2
 MIN_WINDOW_SIZE = 15, 5
 POSITIONS = [(-5, -5), (5, 5), (5, -5), (-5, 5)]

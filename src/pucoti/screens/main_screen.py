@@ -15,13 +15,14 @@ from ..server_comunication import UpdateRoomRequest, send_update
 from .base_screen import PucotiScreen, Context
 from . import help_screen, purpose_history_screen, social_screen
 from ..dfont import DFont
+from .. import db
 
 
 class MainScreen(PucotiScreen):
     def __init__(self, ctx: Context) -> None:
         super().__init__()
 
-        self.initial_duration = time_utils.human_duration(ctx.config.initial_timer)
+        self.initial_duration = 0
         self.start = round(time())
         self.timer_end = self.initial_duration
         self.last_rung = 0
@@ -29,6 +30,7 @@ class MainScreen(PucotiScreen):
         self.callbacks = [CountdownCallback(cfg) for cfg in ctx.config.run_at]
 
         self.hide_totals = False
+        self.set_timer_to(time_utils.human_duration(ctx.config.initial_timer))
         ctx.set_purpose("", force=True)
 
         self.purpose_editor = TextEdit(
@@ -43,6 +45,14 @@ class MainScreen(PucotiScreen):
     def set_purpose(self, purpose):
         self.ctx.set_purpose(purpose)
         self.update_servers()
+
+    def shift_timer(self, delta: float):
+        self.timer_end += delta
+        db.store(db.Action.add_time(duration=delta))
+
+    def set_timer_to(self, new_duration: float):
+        self.timer_end = time_utils.compute_timer_end(new_duration, self.start)
+        db.store(db.Action.set_timer(timer=new_duration))
 
     @property
     def purpose(self):
@@ -102,17 +112,19 @@ class MainScreen(PucotiScreen):
         # We only handle keydown events from here on.
         match event.key:
             case pg.K_j:
-                self.timer_end -= 60 * 5 if pygame_utils.shift_is_pressed(event) else 60
+                delta = -60 * 5 if pygame_utils.shift_is_pressed(event) else -60
+                self.shift_timer(delta)
             case pg.K_k:
-                self.timer_end += 60 * 5 if pygame_utils.shift_is_pressed(event) else 60
+                delta = 60 * 5 if pygame_utils.shift_is_pressed(event) else 60
+                self.shift_timer(delta)
             case number if number in constants.NUMBER_KEYS:
                 new_duration = 60 * pygame_utils.get_number_from_key(number)
                 if pygame_utils.shift_is_pressed(event):
                     new_duration *= 10
-                self.timer_end = time_utils.compute_timer_end(new_duration, self.start)
+                self.set_timer_to(new_duration)
                 self.initial_duration = new_duration
             case pg.K_r:
-                self.timer_end = time_utils.compute_timer_end(self.initial_duration, self.start)
+                self.set_timer_to(self.initial_duration)
             case pg.K_t:
                 self.hide_totals = not self.hide_totals
             case pg.K_h | pg.K_QUESTION:

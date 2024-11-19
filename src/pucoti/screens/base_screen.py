@@ -8,6 +8,7 @@ import luckypot
 from ..purpose import Purpose
 from ..config import PucotiConfig
 from ..server_comunication import UserData
+from .. import db
 
 
 @dataclass
@@ -37,6 +38,7 @@ class Context:
         if force or not self.purpose_history or purpose != self.purpose_history[-1].text:
             self.purpose_history.append(Purpose(purpose))
             self.purpose_history[-1].add_to_history(self.config.history_file)
+            db.store(db.Action.purpose(purpose))
 
 
 class PucotiScreen(luckypot.AppState):

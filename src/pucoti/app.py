@@ -118,8 +118,8 @@ class App(luckypot.App[PucotiScreen]):
 
 defaults = PucotiConfig()
 
-if constants.CONFIG_FILE.exists():
-    defaults = defaults.load(constants.CONFIG_FILE)
+if constants.CONFIG_PATH.exists():
+    defaults = defaults.load(constants.CONFIG_PATH)
 
 
 def print_config(value: bool):
@@ -156,7 +156,7 @@ def main(
     borderless: Annotated[bool, doc("window.borderless")] = defaults.window.borderless,
     social: Annotated[SocialConfig, typer.Option(help="Share timer online. Fmt: 'usernam@room'", parser=SocialConfig.from_string)] = None,
     print_config: Annotated[bool, typer.Option("--print-config", help="Print the configuration and exit", callback=print_config, is_eager=True)] = False,
-    config_file: Annotated[Path, typer.Option("--config", help="Path to the configuration file")] = constants.CONFIG_FILE,
+    config_file: Annotated[Path, typer.Option("--config", help="Path to the configuration file")] = constants.CONFIG_PATH,
     # fmt: on
 ) -> None:
     config = PucotiConfig()
