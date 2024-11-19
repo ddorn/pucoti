@@ -119,7 +119,7 @@ class App(luckypot.App[PucotiScreen]):
 defaults = PucotiConfig()
 
 if constants.CONFIG_PATH.exists():
-    defaults = defaults.load(constants.CONFIG_PATH)
+    defaults = defaults.merge_partial_from_file(constants.CONFIG_PATH)
 
 
 def print_config(value: bool):
@@ -161,15 +161,27 @@ def main(
 ) -> None:
     config = PucotiConfig()
     if config_file.exists():
-        config = config.load(config_file)
+        config = config.merge_partial_from_file(config_file)
+    else:
+        raise typer.BadParameter(f"File {config_file} does not exist.")
 
+    to_ignore = {"config_file", "print_config"}
+    renamed = {
+        "borderless": "window.borderless",
+    }
     for param, source in ctx._parameter_source.items():
         if source == ParameterSource.COMMANDLINE:
-            if param == "config_file":
-                if not config_file.exists():
-                    raise typer.BadParameter(f"File {config_file} does not exist.")
+            if param in to_ignore:
                 continue
-            config = config.merge({param: ctx.params[param]})
+
+            param = renamed.get(param, param)
+
+            # Build a dict like {window: {borderless: True}}
+            data = ctx.params[param]
+            for part in reversed(param.split(".")):
+                data = {part: data}
+
+            config = config.merge_partial(data)
 
     App(config).run()
 

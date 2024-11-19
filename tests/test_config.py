@@ -1,47 +1,46 @@
-from dataclasses import asdict, dataclass, field
-from typing import Annotated
+from typing import Annotated, ClassVar
+
+from pydantic import Field
 
 import pytest
+import yaml
 
 from pucoti import config
-from pucoti.config import Config
+from pucoti.base_config import Config
 
 
-@dataclass(frozen=True)
 class SmallConfig(Config):
     """A small config"""
 
     name: str = "Joe"
-    age: Annotated[int, "Pass -1 if you don't want to tell"] = -1
+    age: Annotated[int, Field(description="Pass -1 if you don't want to tell")] = -1
 
-    EXPECTED = """# A small config
+    EXPECTED: ClassVar = """# A small config
 name: Joe
 # Pass -1 if you don't want to tell
 age: -1"""
 
 
-@dataclass(frozen=True)
 class ConfigWithList(Config):
     """With lists"""
 
-    names: list[str] = field(default_factory=list)
+    names: Annotated[list[str], Field(default_factory=list)]
     rect: tuple[int, int] = (3, 4)
 
-    EXPECTED = """
+    EXPECTED: ClassVar = """
 # With lists
 names: []
 rect: [3, 4]
 """
 
 
-@dataclass(frozen=True)
 class RecursiveConfig(Config):
     """Recursivity!"""
 
     small: SmallConfig = SmallConfig()
-    lists: Annotated[ConfigWithList, "Annot for a sub-config"] = ConfigWithList()
+    lists: Annotated[ConfigWithList, Field(description="Annot for a sub-config")] = ConfigWithList()
 
-    EXPECTED = """
+    EXPECTED: ClassVar = """
 # Recursivity!
 small:
   # A small config
@@ -54,23 +53,6 @@ lists:
   names: []
   rect: [3, 4]
 """
-
-
-@pytest.mark.parametrize("cfg", [Config, SmallConfig, Annotated[Config, "annotation"]])
-def test_is_config_yes(cfg):
-    assert config.Config.is_config(cfg)
-
-
-@pytest.mark.parametrize(
-    "not_cfg",
-    [
-        list[Config],
-        tuple[Config, Config],
-        Annotated[int, "not ok"],
-    ],
-)
-def test_is_config_no(not_cfg):
-    assert not config.Config.is_config(not_cfg)
 
 
 all_config_classes = pytest.mark.parametrize(
@@ -94,20 +76,32 @@ def test_gen_yaml(cfg):
 @all_config_classes
 def test_dump_load(cfg: type[Config]):
     default_config = cfg()
-    assert cfg().load(asdict(default_config)) == default_config
+    assert cfg().merge_partial(default_config.model_dump()) == default_config
 
 
 def test_merge_simple():
     cfg = SmallConfig()
 
-    new = cfg.merge(dict(age=12))
+    new = cfg.merge_partial(dict(age=12))
 
-    assert asdict(new) == dict(age=12, name="Joe")
+    assert new.model_dump() == dict(age=12, name="Joe")
     # Should not have changed
-    assert asdict(cfg) == asdict(SmallConfig())
+    assert cfg.model_dump() == SmallConfig().model_dump()
 
 
 def test_load_partial():
-    new = RecursiveConfig().load({"small": {"age": 99}})
+    new = RecursiveConfig().merge_partial({"small": {"age": 99}})
 
-    assert asdict(new) == asdict(RecursiveConfig(small=SmallConfig(age=99)))
+    assert new.model_dump() == RecursiveConfig(small=SmallConfig(age=99)).model_dump()
+
+
+def test_load_template():
+    template = config.PucotiConfig.generate_default_config_yaml()
+    data = yaml.safe_load(template)
+
+    cfg_validated = config.PucotiConfig.model_validate(data)
+    cfg_merged = config.PucotiConfig().merge_partial(data)
+    cfg_default = config.PucotiConfig()
+
+    assert cfg_validated == cfg_default
+    assert cfg_merged == cfg_default
