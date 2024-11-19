@@ -24,7 +24,7 @@ age: -1"""
 class ConfigWithList(Config):
     """With lists"""
 
-    names: Annotated[list[str], Field(default_factory=list)]
+    names: list[str] = Field(default_factory=list)
     rect: tuple[int, int] = (3, 4)
 
     EXPECTED: ClassVar = """

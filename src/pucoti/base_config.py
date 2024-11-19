@@ -77,6 +77,7 @@ class Config(BaseModel):
         for part in parts[1:]:
             annot = field.annotation
             # field.annotation is necessarly a subconfig. It doesn't have an meaning otherwise
+            assert isinstance(annot, type)
             assert issubclass(annot, Config)
             field = annot.model_fields[part]
 
