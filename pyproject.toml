@@ -8,6 +8,7 @@ keywords = ["timer", "countdown", "pygame", "gui"]
 requires-python = ">=3.12"
 dependencies = [
     "luckypot>=0.1.1",
+    "platformdirs>=4.3.6",
     "pydantic>=2.9.2",
     "pygame-ce>=2.5.2",
     "pyobjc-framework-cocoa==10.3.1 ; sys_platform == 'darwin'",
@@ -23,6 +24,7 @@ server = [
 ]
 dev = [
     "hatch>=1.13.0",
+    "ipykernel>=6.29.5",
     "pre-commit>=4.0.1",
 ]
 
