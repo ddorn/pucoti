@@ -24,31 +24,18 @@ class PucotiModel(BaseModel):
         return cls.table + ".jsonl"
 
 
-class Entry(BaseModel):
+class FocusedWindow(PucotiModel):
     start: float
     end: float
     window_title: str
     window_class: str
 
-    table: ClassVar[str] = "entries"
-
-
-class Purpose(BaseModel):
-    table: ClassVar[str] = "purposes"
-
-    start: float
-    end: float
-    purpose: str
+    table: ClassVar[str] = "focused_windows"
 
 
 class SetPurposeArgs(PucotiModel):
     purpose: str
     action: Literal["set_purpose"] = "set_purpose"
-
-
-class AddTimeArgs(PucotiModel):
-    duration: float
-    action: Literal["add_time"] = "add_time"
 
 
 class SetTimerArgs(PucotiModel):
@@ -60,15 +47,11 @@ class Action(PucotiModel):
     table: ClassVar[str] = "actions"
 
     time: float
-    content: SetPurposeArgs | AddTimeArgs | SetTimerArgs
+    content: SetPurposeArgs | SetTimerArgs
 
     @classmethod
     def purpose(cls, purpose: str) -> Action:
         return cls(time=time.time(), content=SetPurposeArgs(purpose=purpose))
-
-    @classmethod
-    def add_time(cls, duration: float) -> Action:
-        return cls(time=time.time(), content=AddTimeArgs(duration=duration))
 
     @classmethod
     def set_timer(cls, timer: float) -> Action:

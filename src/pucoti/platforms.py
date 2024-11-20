@@ -8,6 +8,7 @@ import platform
 import subprocess
 import sys
 import warnings
+import traceback
 
 import pygame
 
@@ -15,6 +16,7 @@ import pygame
 # Diego uses sway, and it needs a few tweaks as it's a non-standard window manager.
 RUNS_ON_SWAY = os.environ.get("SWAYSOCK") is not None
 IS_MACOS = sys.platform == "darwin" or platform.system() == "Darwin"
+RUNS_ON_XORG = os.environ.get("XDG_SESSION_TYPE") == "x11"
 
 
 def place_window(window, x: int, y: int):
@@ -59,3 +61,57 @@ def set_window_to_sticky():
             ns_window.setCollectionBehavior_(NSWindowCollectionBehaviorCanJoinAllSpaces)
         except Exception as e:
             print(e)
+
+
+def get_active_window_title_and_class(return_empty_string_on_error: bool = True) -> tuple[str, str]:
+    """Get the title and class of the active window."""
+
+    try:
+        wm_name, wm_class = _get_active_window_title_and_class()
+    except NotImplementedError:
+        # We raised this one explicitly, and it should always be propagated.
+        raise
+    except Exception:
+        if return_empty_string_on_error:
+            traceback.print_exc()
+            wm_name = wm_class = ""
+        else:
+            raise
+
+    return wm_name, wm_class
+
+
+def _get_active_window_title_and_class() -> tuple[str, str]:
+    if RUNS_ON_SWAY:
+        a = subprocess.check_output(
+            "swaymsg -t get_tree | jq -r '.. | select(.type?) | select(.focused) | .name, .app_id'",
+            shell=True,
+            text=True,
+        ).splitlines()
+
+        wm_name = a[0]
+        wm_class = a[1]
+
+    elif RUNS_ON_XORG:
+        a = subprocess.check_output(
+            "xprop -id $(xdotool getwindowfocus) -notype WM_NAME WM_CLASS",
+            shell=True,
+            text=True,
+        ).splitlines()
+
+        wm_name = a[0].partition(" = ")[2][1:-1]
+        wm_class = a[1].partition(" = ")[2]
+
+    elif IS_MACOS:
+        # GPT-4 code. Not tested.
+        from AppKit import NSWorkspace
+
+        workspace = NSWorkspace.sharedWorkspace()
+        active_app = workspace.frontmostApplication()
+        wm_name = active_app.localizedName()
+        wm_class = active_app.bundleIdentifier()
+
+    else:
+        raise NotImplementedError("This window manager is not supported.")
+
+    return wm_name, wm_class

@@ -22,15 +22,16 @@ class MainScreen(PucotiScreen):
     def __init__(self, ctx: Context) -> None:
         super().__init__()
 
-        self.initial_duration = 0
+        self.initial_duration = time_utils.human_duration(ctx.config.initial_timer)
         self.start = round(time())
-        self.timer_end = self.initial_duration
+        self.timer_end = 0
+        """Timestamp when the timer hits 0."""
         self.last_rung = 0
         self.nb_rings = 0
         self.callbacks = [CountdownCallback(cfg) for cfg in ctx.config.run_at]
 
         self.hide_totals = False
-        self.set_timer_to(time_utils.human_duration(ctx.config.initial_timer))
+        self.set_timer_to(self.initial_duration)
         ctx.set_purpose("", force=True)
 
         self.purpose_editor = TextEdit(
@@ -42,13 +43,17 @@ class MainScreen(PucotiScreen):
 
         self.last_server_update = 0
 
+    @property
+    def remaining_time(self) -> float:
+        return self.timer_end - (time() - self.start)
+
     def set_purpose(self, purpose):
         self.ctx.set_purpose(purpose)
         self.update_servers()
 
     def shift_timer(self, delta: float):
         self.timer_end += delta
-        db.store(db.Action.add_time(duration=delta))
+        db.store(db.Action.set_timer(timer=self.remaining_time))
 
     def set_timer_to(self, new_duration: float):
         self.timer_end = time_utils.compute_timer_end(new_duration, self.start)
@@ -180,7 +185,7 @@ class MainScreen(PucotiScreen):
         layout = self.layout()
 
         # Render time.
-        remaining = self.timer_end - (time() - self.start)
+        remaining = self.remaining_time  # locked
         if time_rect := layout.get("time"):
             color = self.config.color.timer_up if remaining < 0 else self.config.color.timer
             t = self.config.font.big.render(
