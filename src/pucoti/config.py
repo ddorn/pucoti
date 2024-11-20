@@ -1,7 +1,7 @@
 from functools import cached_property
 from pathlib import Path
 from dataclasses import field
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import Field
 
@@ -12,11 +12,21 @@ from .base_config import Config
 
 
 class RunAtConfig(Config):
-    """Run commands at specific times."""
+    """
+    Run commands at specific times, possibly repeatedly.
+
+    Times for `at` and `every` are human-readable durations, like '1h 30m 15s'.
+    If `cmd_type` is `shell`, the default, the command is run directly in the system shell.
+    If `cmd_type` is `python`, the command is run in the same Python process as PUCOTI, and can import modules.
+        In particular, it has a access to `app`
+    """
 
     at: str = "-1m"
     cmd: str = "notify-send 'Time is up by one minute!'"
-    # every: str | None = None
+    every: str | None = None
+    cmd_type: Annotated[
+        Literal["shell", "python"], Field(description="Can be 'shell' or 'python'")
+    ] = "shell"
 
     @classmethod
     def from_string(cls, string: str) -> Self:

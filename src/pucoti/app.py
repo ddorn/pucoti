@@ -154,7 +154,7 @@ def main(
     restart: Annotated[bool, doc("restart")] = defaults.restart,
     run_at: Annotated[list[RunAtConfig], doc("run_at", help=" E.g. '-1m:suspend'", parser=RunAtConfig.from_string)] = [],
     borderless: Annotated[bool, doc("window.borderless")] = defaults.window.borderless,
-    social: Annotated[SocialConfig, typer.Option(help="Share timer online. Fmt: 'usernam@room'", parser=SocialConfig.from_string)] = SocialConfig(),
+    social: Annotated[SocialConfig, typer.Option(help="Share timer online. Fmt: 'usernam@room'", parser=SocialConfig.from_string)] = None,
     print_config: Annotated[bool, typer.Option("--print-config", help="Print the configuration and exit", callback=print_config, is_eager=True)] = False,
     config_file: Annotated[Path, typer.Option("--config", help="Path to the configuration file")] = constants.CONFIG_PATH,
     # fmt: on
