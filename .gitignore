@@ -3,3 +3,5 @@ data
 dist
 build
 *.spec
+.stfolder/
+.stignore
