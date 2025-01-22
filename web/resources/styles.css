@@ -1,0 +1,43 @@
+@font-face {
+    font-family: "Bevan";
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/Bevan-Regular.ttf") format("truetype");
+}
+
+/* 1. Use a more-intuitive box-sizing model */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* 2. Remove default margin */
+* {
+    margin: 0;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+}
+
+:root {
+    --timer: rgb(255, 224, 145);
+    --purpose: rgb(183, 255, 183);
+}
+
+body {
+    background-color: black;
+    font-family: "Bevan", sans-serif !important;
+}
+
+#main-timer {
+    color: var(--timer);
+    border: 1px solid white;
+    font-size font-weight: 700;
+    container-name: timer;
+}
+
+#main-timer.is-negative {
+    color: red;
+}

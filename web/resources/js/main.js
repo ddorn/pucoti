@@ -1,14 +1,16 @@
 Neutralino.init();
 Neutralino.events.on("windowClose", () => Neutralino.app.exit());
 
-window.Router = {
-  get: (page) => {
-    window.location.hash = page;
-  },
-};
-
 let $app = document.querySelector("#app");
 
+/**
+ * Fetches the page from /pages/XXXX.html and
+ * replaces the inside of #app with its content.
+ * If name is empty, loads /pages/index.html
+ *
+ * It provides an unmount hook
+ * @param {string} name of the page
+ */
 async function loadPage(name) {
   name = name.replace(/[^a-z]+/g, "");
   if (name == "") {
@@ -16,11 +18,11 @@ async function loadPage(name) {
   }
 
   try {
-    let response = await fetch(`/pages/${page}.html`);
+    let response = await fetch(`/pages/${name}.html`);
     let html = await response.text();
 
     // dispatchEvent invokes event handlers synchronously
-    window.dispatchEvent(new CustomEvent("page-unmount", { next: page }));
+    window.dispatchEvent(new CustomEvent("page-unmount", { next: name }));
 
     let $tmpl = document.createElement("div");
     $tmpl.innerHTML = html;
@@ -45,10 +47,10 @@ async function loadPage(name) {
   }
 }
 
-async function loadPageFromFragment() {
-  return await loadPage(window.location.hash);
-}
+loadPage(window.location.hash);
 
-window.addEventListener("hashchange", loadPageFromFragment);
+window.addEventListener("hashchange", () => loadPage(window.location.hash));
 
-loadPageFromFragment();
+// switchToPage is a global utility to redirect to another page
+// For example, switchToPage('index') or switchToPage('settings')
+window.switchToPage = (name) => (window.location.hash = name);
