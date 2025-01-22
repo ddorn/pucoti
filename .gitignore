@@ -1,5 +1,1 @@
-__pycache__
-data
-dist
-build
-*.spec
+bin/
