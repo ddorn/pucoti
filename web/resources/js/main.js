@@ -39,8 +39,7 @@ async function loadPage(name) {
       // TODO: Handle errors.
       let src = await (await fetch(scriptSource)).text();
 
-      // TODO: Isolate the context with new Function(). Does it work?
-      eval(src);
+      new Function(src)();
     }
   } catch (e) {
     console.error(e);
@@ -48,9 +47,4 @@ async function loadPage(name) {
 }
 
 loadPage(window.location.hash);
-
 window.addEventListener("hashchange", () => loadPage(window.location.hash));
-
-// switchToPage is a global utility to redirect to another page
-// For example, switchToPage('index') or switchToPage('settings')
-window.switchToPage = (name) => (window.location.hash = name);

@@ -1,13 +1,12 @@
 <!doctype html>
 <html>
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <title>Pucoti</title>
     <link rel="stylesheet" href="/styles.css" />
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="app"></div>
 
     <!-- Neutralino.js client. This file is gitignored,
@@ -15,62 +14,59 @@
         Avoid copy-pasting it.
         -->
     <script src="/js/neutralino.js"></script>
+    <script src="/js/lib.js"></script>
     <script src="/js/main.js"></script>
 
     <script>
-        let countdownDuration = 10 * 60 * 1000;
+      let countdownDuration = 10 * 60 * 1000;
+      let now = new Date().getTime();
+      let ringTime = now + countdownDuration;
+
+      let state = {
+        countdownDuration,
+        ringTime,
+        intentionStart: 0,
+        intentionHistory: [],
+        pucotiStart: now,
+        lastRung: 0,
+        ringEvery: 20, // seconds
+        intention: "",
+        /**
+         * Set the intention.
+         * @param {string} intention
+         */
+        setIntention(intention) {
+          this.intention = intention;
+          this.intentionStart = new Date().getTime();
+          this.intentionHistory.push({
+            intention,
+            start: this.intentionStart,
+          });
+        },
+      };
+
+      // Share the state globally
+      window.state = state;
+      // Check if the time is up
+      let audio = new Audio("/audio/bell.mp3");
+
+      function checkTime() {
         let now = new Date().getTime();
-        let ringTime = now + countdownDuration;
-
-        let state = {
-            countdownDuration,
-            ringTime,
-            intentionStart: 0,
-            pucotiStart: now,
-            lastRung: 0,
-            ringEvery: 20,  // seconds
-            intention: '',
-        };
-
-        // Share the state globally
-        window.state = state;
-
-        // Log everything about spawned processes
-        Neutralino.events.on('spawnedProcess', (evt) => {
-            switch(evt.detail.action) {
-                case 'stdOut':
-                    console.log(evt.detail.id, evt.detail.data);
-                    break;
-                case 'stdErr':
-                    console.error(evt.detail.id, evt.detail.data);
-                    break;
-                case 'exit':
-                    console.log(`Process ${evt.details.id} exited with code ${evt.detail.code}`);
-                    break;
-            }
-        });
-
-        // Check if the time is up
-        let audio = new Audio('/audio/bell.mp3');
-
-        function checkTime() {
-            let now = new Date().getTime();
-            if (now > state.ringTime) {
-                if (now - state.lastRung > state.ringEvery * 1000) {
-                    window.state.lastRung = now;
-                    audio.currentTime = 0;
-                    audio.play();
-                    Neutralino.os.spawnProcess('notify-send "Pucoti" "Time is up, after"');
-                }
-            } else {
-                state.lastRung = 0;
-            }
+        if (now > state.ringTime) {
+          if (now - state.lastRung > state.ringEvery * 1000) {
+            window.state.lastRung = now;
+            audio.currentTime = 0;
+            audio.play();
+            Neutralino.os.spawnProcess(
+              'notify-send "Pucoti" "Time is up, after"',
+            );
+          }
+        } else {
+          state.lastRung = 0;
         }
+      }
 
-        setInterval(checkTime, 500);
-
+      setInterval(checkTime, 500);
     </script>
-
-</body>
-
+  </body>
 </html>
