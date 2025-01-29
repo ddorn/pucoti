@@ -1,4 +1,4 @@
-.PHONY: all run mkdist zip linux check_git_status poetry_patch poetry_minor poetry_major commit_version_bump publish patch minor major clean distclean
+.PHONY: all run mkdist zip linux check_git_status poetry_patch poetry_minor poetry_major commit_version_bump publish patch minor major clean distclean web
 
 END=\033[0m
 GREEN=\033[34m
@@ -78,3 +78,10 @@ deploy:
 
 server:
 	poetry run uvicorn pucoti.server:app --reload --port 9123
+
+
+
+# Web version
+
+web:
+	cd web && pnpx @neutralinojs/neu run

@@ -2,7 +2,7 @@ const MINUTE = 60 * 1000;
 
 // switchToPage is a global utility to redirect to another page
 // Example:
-// switchToPage('index')
+// switchToPage('home')
 // switchToPage('settings')
 function switchToPage(name) {
   // This change is picked up by the router.

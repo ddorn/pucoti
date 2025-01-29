@@ -6,7 +6,7 @@ let $app = document.querySelector("#app");
 /**
  * Fetches the page from /pages/XXXX.html and
  * replaces the inside of #app with its content.
- * If name is empty, loads /pages/index.html
+ * If name is empty, loads /pages/home.html
  *
  * It provides an unmount hook
  * @param {string} name of the page
@@ -14,7 +14,7 @@ let $app = document.querySelector("#app");
 async function loadPage(name) {
   name = name.replace(/[^a-z]+/g, "");
   if (name == "") {
-    name = "index";
+    name = "home";
   }
 
   try {
