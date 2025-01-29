@@ -1,3 +1,4 @@
+<!-- TODO: Merge with CSS -->
 <link href="/css/help.css" rel="stylesheet" />
 <h1 class="page-title">PUCOTI Bindings</h1>
 
@@ -68,4 +69,11 @@
     </tr>
 </table>
 
-<!-- TODO: Merge with CSS -->
+
+<script>
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            switchToPage('home')
+        }
+    })
+</script>

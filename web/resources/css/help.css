@@ -5,9 +5,7 @@
 }
 
 .help-bindings {
-    border: 1px solid white;
-    width: 80vw;
-    margin: 0 auto;
+    margin: -1.75vw auto;
     border-collapse: separate;
     border-spacing: 0 1.75vw;
 }
@@ -15,6 +13,7 @@
 .help-binding--key {
     color: var(--purpose);
     font-size: 3vw;
+    padding-right: 2.5vw;
 }
 
 .help-binding--def {

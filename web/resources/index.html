@@ -33,7 +33,7 @@
         intention: "",
         secondaryTimers: [
           "Total time",
-          "Main timer",
+          // "Main timer",
           "On intention",
         ],
         /**
@@ -66,8 +66,8 @@
               color: "var(--purpose)",
               name: "On intention",
             },
-          }
-        }
+          };
+        },
       };
 
       // Share the state globally
@@ -83,9 +83,15 @@
             window.state.lastRung = now;
             audio.currentTime = 0;
             audio.play();
-            Neutralino.os.spawnProcess(
-              'notify-send "Pucoti" "Time is up, after"',
-            );
+            try {
+              Neutralino.os.spawnProcess(
+                'notify-send "Pucoti" "Time is up, after"',
+              );
+            } catch (e) {
+              console.error(
+                `could not send notification using notify-send: ${e}`,
+              );
+            }
           }
         } else {
           state.lastRung = 0;

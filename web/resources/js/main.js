@@ -13,7 +13,7 @@ let $app = document.querySelector("#app");
  */
 async function loadPage(name) {
   name = name.replace(/[^a-z]+/g, "");
-  if (name == "") {
+  if (name == "" || name == "index") {
     name = "home";
   }
 
@@ -28,20 +28,26 @@ async function loadPage(name) {
     $tmpl.innerHTML = html;
 
     let scripts = [];
-    $tmpl.querySelectorAll("script").forEach((script) => {
-      scripts.push(script.src);
+    for (const script of $tmpl.querySelectorAll("script")) {
+      if (script.src !== "") {
+        // TODO: let the browser do it
+        let src = await (await fetch(script.src)).text();
+
+        scripts.push(src);
+      } else {
+        scripts.push(script.innerText);
+      }
+
       script.remove();
-    });
+    }
 
     $app.innerHTML = $tmpl.innerHTML;
 
-    for (const scriptSource of scripts) {
-      // TODO: Handle errors.
-      let src = await (await fetch(scriptSource)).text();
-
+    for (const src of scripts) {
       new Function(src)();
     }
   } catch (e) {
+    console.error("Evaluated script errored, see below");
     console.error(e);
   }
 }

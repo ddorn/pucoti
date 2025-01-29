@@ -72,7 +72,7 @@ function scaleMaxSize(element) {
   let fontSizeLower = 0;
   let fontSizeUpper = 2000;
 
-  // Actual available, without the padding.
+  // Actual available, without the padding.lib.
   let width = element.clientWidth - parseFloat(getCssStyle(element, "padding-left")) - parseFloat(getCssStyle(element, "padding-right"));
   let height = element.clientHeight - parseFloat(getCssStyle(element, "padding-top")) - parseFloat(getCssStyle(element, "padding-bottom"));
 
@@ -109,6 +109,7 @@ Neutralino.events.on("spawnedProcess", (evt) => {
       console.error(evt.detail.id, evt.detail.data);
       break;
     case "exit":
+      console.log(evt)
       console.log(
         `Process ${evt.details.id} exited with code ${evt.detail.code}`,
       );

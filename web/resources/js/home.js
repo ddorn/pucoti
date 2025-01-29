@@ -2,9 +2,7 @@
   let $timer = document.getElementById("main-timer");
   let $intention = document.getElementById("intention");
   let $secondaryTimers = document.getElementById("secondary-timers");
-  let $secondaryTimerTemplate = document.getElementById(
-    "timer-template",
-  );
+  let $secondaryTimerTemplate = document.getElementById("timer-template");
 
   function setTimer(element, timer) {
     let time = fmtSeconds(timer.value).join(":");
@@ -36,6 +34,7 @@
       let timer = timers[window.state.secondaryTimers[i]];
       let $timer = $secondaryTimers.children[i];
       setTimer($timer, timer);
+      $timer.style.width = `calc(100% / ${numTimers})`;
     }
 
     scaleMaxSizeAll();
@@ -47,6 +46,7 @@
   window.addEventListener("page-unmount", () => {
     clearInterval(redrawHandle);
   });
+
 
   // When pressing J/K, add/subtract 1 minute. If shift is pressed, do 5 instead
   document.addEventListener("keydown", (e) => {
@@ -68,6 +68,9 @@
           new Date().getTime() + window.state.countdownDuration;
         // Key corresponding to 0-9 -> set to that minute
         // + if shift is pressed, set to 10*key
+        break;
+      case "h":
+        window.switchToPage("help");
         break;
       case "Enter":
         $intention.focus();
@@ -94,6 +97,8 @@
       window.state.setIntention($intention.value);
       $intention.blur(); // Remove focus from intention
     }
+    window.requestAnimationFrame(() => scaleMaxSize($intention));
     e.stopPropagation();
   });
+
 })();
