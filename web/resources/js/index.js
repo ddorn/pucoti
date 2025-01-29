@@ -14,6 +14,8 @@
     }
     $timer.innerHTML = time;
     $timer.classList.toggle("is-negative", isNegative);
+
+    scaleMaxSizeAll();
   }
 
   let redrawHandle = setInterval(redraw, 1000);

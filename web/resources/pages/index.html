@@ -1,11 +1,13 @@
-<input type="text" id="intention" placeholder="Intention" />
-<!--<svg viewBox="0 0 46 12.5" style="width: 100%">-->
-<svg viewBox="0 0 46 12.5" style="width: 100%">
-  <text x="0" y="12.125" id="main-timer">00:000</text>
-</svg>
-<footer>
-  <div id="total-time">tot</div>
-  <div id="intention-history">int</div>
-</footer>
+
+<div style="height: 100vh;">
+  <input type="text" id="intention" placeholder="Intention" class="scale-max-size" style="height: 20vh; border: 1px solid red; width: 100%">
+
+  <div id="main-timer" class="scale-max-size" style="height: 60%; border: 1px solid red;">000:00</div>
+  <footer>
+    <div id="total-time">tot</div>
+    <div id="intention-history">int</div>
+  </footer>
+
+</div>
 
 <script src="/js/index.js" type="module"></script>

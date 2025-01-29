@@ -28,7 +28,7 @@ body {
 }
 
 #main-timer {
-  fill: var(--timer);
+  color: var(--timer);
   font-weight: 900;
 }
 
@@ -39,6 +39,7 @@ body {
 #intention {
   background: transparent;
   border: none;
-  font-size: 200%;
+  /* font-size: 200%; */
   color: green;
+  padding: 1rem;
 }
