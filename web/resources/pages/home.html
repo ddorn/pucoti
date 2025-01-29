@@ -1,13 +1,28 @@
+<div style="overflow: hidden">
+    <template id="timer-template">
+        <div class="timer-container scale-max-size">
+            <span class="timer-value">000:00</span>
+        </div>
+    </template>
 
-<div style="height: 100vh;">
-  <input type="text" id="intention" placeholder="Intention" class="scale-max-size" style="height: 20vh; border: 1px solid red; width: 100%">
+    <input type="text" id="intention" placeholder="Intention" class="scale-max-size" style="height: 20vh" />
 
-  <div id="main-timer" class="scale-max-size" style="height: 60%; border: 1px solid red;">000:00</div>
-  <footer>
-    <div id="total-time">tot</div>
-    <div id="intention-history">int</div>
-  </footer>
+    <div id="main-timer" class="timer-container scale-max-size">
+        <span class="timer-value">000:00</span>
+    </div>
+        <!-- <span class="timer-label">label</span> -->
 
+<!--
+    <div id="main-timer" class="timer-container">
+        <div class="scale-max-size">
+          <span class="timer-value">000:00</span>
+        </div>
+        <div class="scale-max-size">
+          <span class="timer-label">label</span>
+        </div>
+    </div> -->
+
+    <footer id="secondary-timers" class="timer-row"></footer>
 </div>
 
 <script src="/js/home.js" type="module"></script>

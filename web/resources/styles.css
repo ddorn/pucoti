@@ -1,45 +1,92 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@200..900&display=swap");
+@font-face {
+    src: url("/fonts/Inter-tnum.otf");
+    font-family: "Inter";
+    font-weight: 900;
+    font-display: swap;
+}
 
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 * {
-  font-family: "Inter", sans-serif !important;
-  font-variant-numeric: tabular-nums;
+    font-family: "Inter", monospace !important;
+    line-height: 77%;
 }
 
 body {
-  -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing: antialiased;
 }
 
 :root {
-  --timer: rgb(255, 224, 145);
-  --purpose: rgb(183, 255, 183);
+    --timer: rgb(255, 224, 145);
+    --total-time: #b6b6fe;
+    --purpose: rgb(183, 255, 183);
+    --time-negative: red;
 }
 
 html,
 body {
-  padding: 0;
-  margin: 0;
-  background-color: black;
+    padding: 0;
+    margin: 0;
+    background-color: black;
 }
 
 #main-timer {
-  color: var(--timer);
-  font-weight: 900;
-}
-
-#main-timer.is-negative {
-  color: red;
+    width: 100%;
+    color: var(--timer);
+    font-weight: 900;
+    height: 60vh;
 }
 
 #intention {
-  background: transparent;
-  border: none;
-  /* font-size: 200%; */
-  color: green;
-  padding: 1rem;
+    background: transparent;
+    border: none;
+    color: green;
+    padding: 1rem;
 }
+
+.timer-row {
+    display: flex;
+    justify-content: space-between;
+    height: 20vh;
+}
+
+.timer-container {
+    border: 1px solid blue;
+    width: 100%;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
+.timer-value {
+    display: block;
+    flex: 1;
+    border: 1px solid white;
+}
+
+.timer-label {
+    flex: 1;
+    border: 1px solid yellowgreen;
+}
+/*
+.timer-container div:has(> .timer-label) {
+  position: absolute;
+  top: -1000px;
+  left: -1000px;
+}
+.timer-container:hover div:has(> .timer-label) {
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+.timer-container:hover div:has(> .timer-value) {
+  position: absolute;
+  top: -1000px;
+  left: -1000px;
+} */

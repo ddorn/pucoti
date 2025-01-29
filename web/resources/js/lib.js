@@ -50,10 +50,8 @@ function getTextMetrics(el, fontSizeOverride) {
   let fontSize = fontSizeOverride || getCssStyle(el, "font-size");
   let fontFamily = getCssStyle(el, "font-family") || "Times New Roman";
   context.font = `${fontWeight} ${fontSize} ${fontFamily}`;
-  //console.log(context.font);
 
   let text = el.innerText || el.value || el.getAttribute("placeholder");
-  //console.log(text, el.innerText);
 
   let metrics = context.measureText(text);
   metrics.actualHeight =
@@ -71,20 +69,12 @@ function getCssStyle(element, prop) {
  * @param {HTMLElement} element
  */
 function scaleMaxSize(element) {
-  let fontSizeLower = 1;
-  let fontSizeUpper = 200;
+  let fontSizeLower = 0;
+  let fontSizeUpper = 2000;
 
   // Actual available, without the padding.
-  //console.log(parseFloat(getCssStyle(element, 'padding-left')), getCssStyle(element, 'padding-right'), "padding")
-  let width =
-    element.clientWidth -
-    parseFloat(getCssStyle(element, "padding-left")) -
-    parseFloat(getCssStyle(element, "padding-right"));
-  let height =
-    element.clientHeight -
-    parseFloat(getCssStyle(element, "padding-top")) -
-    parseFloat(getCssStyle(element, "padding-bottom"));
-  //console.log(width, element.clientWidth, "width")
+  let width = element.clientWidth - parseFloat(getCssStyle(element, "padding-left")) - parseFloat(getCssStyle(element, "padding-right"));
+  let height = element.clientHeight - parseFloat(getCssStyle(element, "padding-top")) - parseFloat(getCssStyle(element, "padding-bottom"));
 
   // Simple binary search to find the largest font size that fits
   while (fontSizeUpper > fontSizeLower + 1) {
@@ -97,7 +87,7 @@ function scaleMaxSize(element) {
     }
   }
 
-  //console.log(getTextMetrics(element, fontSizeLower + 'px'), element);
+  // console.log(getTextMetrics(element, fontSizeLower + 'px'), element, "width", width, "height", height);
 
   element.style.fontSize = fontSizeLower + "px";
 }

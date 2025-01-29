@@ -1,0 +1,23 @@
+.page-title {
+    color: var(--timer);
+    font-size: 5vw;
+    text-align: center;
+}
+
+.help-bindings {
+    border: 1px solid white;
+    width: 80vw;
+    margin: 0 auto;
+    border-collapse: separate;
+    border-spacing: 0 1.75vw;
+}
+
+.help-binding--key {
+    color: var(--purpose);
+    font-size: 3vw;
+}
+
+.help-binding--def {
+    color: var(--timer);
+    font-size: 3vw;
+}

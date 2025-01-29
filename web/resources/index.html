@@ -31,6 +31,11 @@
         lastRung: 0,
         ringEvery: 20, // seconds
         intention: "",
+        secondaryTimers: [
+          "Total time",
+          "Main timer",
+          "On intention",
+        ],
         /**
          * Set the intention.
          * @param {string} intention
@@ -43,10 +48,31 @@
             start: this.intentionStart,
           });
         },
+        getTimers() {
+          let now = new Date().getTime();
+          return {
+            "Main timer": {
+              value: this.ringTime - now,
+              color: "var(--timer)",
+              name: "Main timer",
+            },
+            "Total time": {
+              value: now - this.pucotiStart,
+              color: "var(--total-time)",
+              name: "Total time",
+            },
+            "On intention": {
+              value: now - this.intentionStart,
+              color: "var(--purpose)",
+              name: "On intention",
+            },
+          }
+        }
       };
 
       // Share the state globally
       window.state = state;
+      state.setIntention("");
       // Check if the time is up
       let audio = new Audio("/audio/bell.mp3");
 
