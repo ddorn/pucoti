@@ -1,4 +1,5 @@
 (() => {
+  let $app = document.getElementById("app");
   let $timer = document.getElementById("main-timer");
   let $intention = document.getElementById("intention");
   let $secondaryTimers = document.getElementById("secondary-timers");
@@ -42,11 +43,6 @@
 
   let redrawHandle = setInterval(redraw, 1000);
   redraw();
-
-  window.addEventListener("page-unmount", () => {
-    clearInterval(redrawHandle);
-  });
-
 
   // When pressing J/K, add/subtract 1 minute. If shift is pressed, do 5 instead
   document.addEventListener("keydown", (e) => {
@@ -92,6 +88,10 @@
     redraw();
   });
 
+  window.addEventListener("page-unmount", () => {
+    clearInterval(redrawHandle);
+  });
+
   $intention.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       window.state.setIntention($intention.value);
@@ -100,5 +100,4 @@
     window.requestAnimationFrame(() => scaleMaxSize($intention));
     e.stopPropagation();
   });
-
 })();

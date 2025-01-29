@@ -73,8 +73,14 @@ function scaleMaxSize(element) {
   let fontSizeUpper = 2000;
 
   // Actual available, without the padding.lib.
-  let width = element.clientWidth - parseFloat(getCssStyle(element, "padding-left")) - parseFloat(getCssStyle(element, "padding-right"));
-  let height = element.clientHeight - parseFloat(getCssStyle(element, "padding-top")) - parseFloat(getCssStyle(element, "padding-bottom"));
+  let width =
+    element.clientWidth -
+    parseFloat(getCssStyle(element, "padding-left")) -
+    parseFloat(getCssStyle(element, "padding-right"));
+  let height =
+    element.clientHeight -
+    parseFloat(getCssStyle(element, "padding-top")) -
+    parseFloat(getCssStyle(element, "padding-bottom"));
 
   // Simple binary search to find the largest font size that fits
   while (fontSizeUpper > fontSizeLower + 1) {
@@ -109,10 +115,47 @@ Neutralino.events.on("spawnedProcess", (evt) => {
       console.error(evt.detail.id, evt.detail.data);
       break;
     case "exit":
-      console.log(evt)
-      console.log(
+      /*console.log(
         `Process ${evt.details.id} exited with code ${evt.detail.code}`,
-      );
+      );*/
       break;
   }
 });
+
+
+
+// Time utils
+
+/**
+ * Convert a human duration such as "1h 30m" to seconds.
+ * @param {string} duration - The duration string to convert
+ * @returns {number} The duration in miliseconds
+ */
+function humanTimeToMs(duration) {
+
+    if (duration.startsWith("-")) {
+        return -humanTimeToMs(duration.slice(1));
+    }
+
+    // Parse the duration.
+    let total = 0;
+    const multiplier = { "s": 1, "m": 60, "h": 3600, "d": 86400 };
+
+    const parts = duration.split(" ");
+    for (let part of parts) {
+        try {
+            const value = parseInt(part.slice(0, -1));
+            const unit = part.slice(-1);
+
+            if (isNaN(value) || !(unit in multiplier)) {
+                throw new Error(`Invalid duration part: ${part}`);
+            }
+
+            total += value * multiplier[unit];
+        } catch (error) {
+            throw new Error(`Invalid duration part: ${part}`);
+        }
+    }
+
+    return total * 1000;
+}

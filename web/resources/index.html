@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -29,12 +29,20 @@
         intentionHistory: [],
         pucotiStart: now,
         lastRung: 0,
-        ringEvery: 20, // seconds
+        ringEvery: "20s", // seconds
         intention: "",
         secondaryTimers: [
           "Total time",
           // "Main timer",
           "On intention",
+        ],
+        commands: [
+          {
+            at: "0m",
+            every: "1m",
+            cmd: "notify-send 'Pucoti' 'Time was up 1+ minute ago !!'",
+            lastRan: 0,
+          },
         ],
         /**
          * Set the intention.
@@ -78,24 +86,33 @@
 
       function checkTime() {
         let now = new Date().getTime();
-        if (now > state.ringTime) {
-          if (now - state.lastRung > state.ringEvery * 1000) {
+        let timeOnCountdown = state.ringTime - now;
+        if (timeOnCountdown <= 0) {
+          if (now - state.lastRung > humanTimeToMs(state.ringEvery)) {
             window.state.lastRung = now;
             audio.currentTime = 0;
             audio.play();
-            try {
-              Neutralino.os.spawnProcess(
-                'notify-send "Pucoti" "Time is up, after"',
-              );
-            } catch (e) {
-              console.error(
-                `could not send notification using notify-send: ${e}`,
-              );
-            }
           }
         } else {
           state.lastRung = 0;
         }
+
+        // Check if any command should run
+        state.commands.forEach((cmd) => {
+          let runTime = -humanTimeToMs(cmd.at) + state.ringTime;
+          if (now > runTime) {
+            if (now - cmd.lastRan > humanTimeToMs(cmd.every)) {
+              cmd.lastRan = now;
+              try {
+                Neutralino.os.spawnProcess(cmd.cmd);
+              } catch (e) {
+                console.error(`Could not run command: ${cmd.cmd}`, e);
+              }
+            }
+          } else {
+            cmd.lastRan = 0;
+          }
+        });
       }
 
       setInterval(checkTime, 500);

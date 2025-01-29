@@ -24,7 +24,7 @@ body {
     --timer: rgb(255, 224, 145);
     --total-time: #b6b6fe;
     --purpose: rgb(183, 255, 183);
-    --time-negative: red;
+    --timer-negative: red;
 }
 
 html,
@@ -46,7 +46,7 @@ body {
     background: transparent;
     border: none;
     color: var(--purpose);
-    padding: 1rem;
+    padding: 0.5rem 1rem;
     width: 100%;
     text-align: center;
 }

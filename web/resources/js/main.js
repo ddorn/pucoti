@@ -8,7 +8,9 @@ let $app = document.querySelector("#app");
  * replaces the inside of #app with its content.
  * If name is empty, loads /pages/home.html
  *
- * It provides an unmount hook
+ * It provides an unmount hook, listen to the page-unmount event.
+ *
+ * This is hacky.
  * @param {string} name of the page
  */
 async function loadPage(name) {
@@ -30,7 +32,7 @@ async function loadPage(name) {
     let scripts = [];
     for (const script of $tmpl.querySelectorAll("script")) {
       if (script.src !== "") {
-        // TODO: let the browser do it
+        // TODO: let the browser do it, listen to the load event
         let src = await (await fetch(script.src)).text();
 
         scripts.push(src);
@@ -54,3 +56,26 @@ async function loadPage(name) {
 
 loadPage(window.location.hash);
 window.addEventListener("hashchange", () => loadPage(window.location.hash));
+
+/**
+ * Storage arbitrates between different file storage strategies,
+ * like the local fs, or indexed db, or the Filesystem API (?)
+ */
+class Storage {
+  async writeFile(name, data) {}
+  async readFile(name) {}
+}
+
+class EntrepriseLocalFilesystemStrategy {
+  async writeFile(name, data) {
+    try {
+      await Neutralino.filesystem.writeFile(name, data);
+    } catch (e) {
+      console.error(e);
+      throw new Error(`Could not read file: ${name}`);
+    }
+  }
+  async readFile(name) {}
+}
+
+window.Storage = new Storage([new EntrepriseLocalFilesystemStrategy()]);
