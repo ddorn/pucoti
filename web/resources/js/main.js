@@ -1,5 +1,7 @@
+/*
 Neutralino.init();
 Neutralino.events.on("windowClose", () => Neutralino.app.exit());
+*/
 
 let $app = document.querySelector("#app");
 

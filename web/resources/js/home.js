@@ -1,5 +1,5 @@
 (() => {
-  let $app = document.getElementById("app");
+  let $home = document.getElementById("home");
   let $timer = document.getElementById("main-timer");
   let $intention = document.getElementById("intention");
   let $secondaryTimers = document.getElementById("secondary-timers");
@@ -68,8 +68,15 @@
       case "h":
         window.switchToPage("help");
         break;
+      case "s":
+        window.switchToPage("settings");
+        break;
+      case "p":
+        window.switchToPage("intentionhistory");
+        break;
       case "Enter":
         $intention.focus();
+        break;
       default:
         if (e.code.startsWith("Digit")) {
           let digit = parseInt(e.code[5]);

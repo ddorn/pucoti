@@ -8,10 +8,10 @@
     "url": "/",
     "enableServer": true,
     "enableNativeAPI": true,
-    "tokenSecurity": "one-time",
+    "tokenSecurity": "none",
     "logging": {
         "enabled": true,
-        "writeToLogFile": true
+        "writeToLogFile": false
     },
     "nativeAllowList": [
         "app.*",

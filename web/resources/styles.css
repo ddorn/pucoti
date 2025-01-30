@@ -1,6 +1,6 @@
 @font-face {
-    src: url("/fonts/Inter-tnum.otf");
-    font-family: "Inter";
+    src: url("/fonts/Inter-tnum.otf") format("opentype");
+    font-family: "InterTnum";
     font-weight: 900;
     font-display: swap;
 }
@@ -12,7 +12,7 @@
 }
 
 * {
-    font-family: "Inter", monospace !important;
+    font-family: "InterTnum", monospace !important;
     line-height: 77%;
 }
 
@@ -50,6 +50,7 @@ body {
     width: 100%;
     text-align: center;
 }
+
 #intention::placeholder {
     color: var(--purpose);
     opacity: 0.4;
@@ -80,6 +81,7 @@ body {
 .timer-label {
     border: 1px solid yellowgreen;
 }
+
 /*
 .timer-container div:has(> .timer-label) {
   position: absolute;
@@ -98,9 +100,34 @@ body {
   left: -1000px;
 } */
 
+@media (width <=400px) {
 
-@media (width <= 400px) {
-  #intention, #intention::placeholder, #main-timer {
-    padding: 0;
-  }
+    #intention,
+    #intention::placeholder,
+    #main-timer {
+        padding: 0;
+    }
+}
+
+.page-title {
+    color: var(--timer);
+    font-size: 5vw;
+    text-align: center;
+}
+
+.help-bindings {
+    margin: -1.75vw auto;
+    border-collapse: separate;
+    border-spacing: 0 1.75vw;
+}
+
+.help-binding--key {
+    color: var(--purpose);
+    font-size: 3vw;
+    padding-right: 2.5vw;
+}
+
+.help-binding--def {
+    color: var(--timer);
+    font-size: 3vw;
 }

@@ -1,0 +1,9 @@
+- [ ] Settings
+- [ ] Help page
+- [ ] Secondary timers
+- [ ] style de l'ecran principal
+- [ ] Historique des intentions
+- [ ] Differencier quand en petit et en grand
+- [ ] Picture-in-picture for the timer
+- [ ] Document-in-picture
+- [ ] Change the font for a niiiice one
