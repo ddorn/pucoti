@@ -9,8 +9,6 @@ import router from './router'
 
 const app = createApp(App)
 
-window.Neutralino = Neutralino
-
 ;(async () => {
     if  (!window.NL_PORT) {
         const config = await import('./auth_info.json')

@@ -2,7 +2,7 @@
 // Project: https://github.com/neutralinojs
 // Definitions project: https://github.com/neutralinojs/neutralino.js
 
-declare namespace Neutralino {
+declare module '@neutralinojs/lib' {
 
 namespace filesystem {
     interface DirectoryEntry {
@@ -761,7 +761,7 @@ interface Response {
     success: boolean;
     message: string;
   }
-  
+
   type Builtin =
       'ready' |
       'trayMenuItemClicked' |
