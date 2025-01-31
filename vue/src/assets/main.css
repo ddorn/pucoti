@@ -1,35 +1,139 @@
-@import './base.css';
+/* @import './base.css'; */
+
+@font-face {
+    src: url("/fonts/Inter-tnum.otf") format("opentype");
+    font-family: "InterTnum";
+    font-weight: 900;
+    font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+* {
+    font-family: "InterTnum", monospace !important;
+    line-height: 77%;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+}
+
+:root {
+    --timer: rgb(255, 224, 145);
+    --total-time: #b6b6fe;
+    --purpose: rgb(183, 255, 183);
+    --timer-negative: red;
+}
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+    background-color: black;
+}
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+  min-height: 100vh;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+#main-timer {
+    width: 100%;
+    color: var(--timer);
+    font-weight: 900;
+    height: 60vh;
+    padding: 1rem;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+#intention {
+    background: transparent;
+    border: none;
+    color: var(--purpose);
+    padding: 0.5rem 1rem;
+    width: 100%;
+    text-align: center;
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+#intention::placeholder {
+    color: var(--purpose);
+    opacity: 0.4;
+    padding: 1rem;
+}
 
-  #app {
+.timer-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+    justify-content: space-around;
+    height: 20vh;
+}
+
+.timer-container {
+    /* border: 1px solid blue; */
+    /* width: calc(100% / 3); */
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
+.timer-value {
+    /* display: block; */
+    flex: 1;
+    /* border: 1px solid white; */
+}
+
+.timer-label {
+    border: 1px solid yellowgreen;
+}
+
+/*
+.timer-container div:has(> .timer-label) {
+  position: absolute;
+  top: -1000px;
+  left: -1000px;
+}
+.timer-container:hover div:has(> .timer-label) {
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+.timer-container:hover div:has(> .timer-value) {
+  position: absolute;
+  top: -1000px;
+  left: -1000px;
+} */
+
+@media (width <=400px) {
+
+    #intention,
+    #intention::placeholder,
+    #main-timer {
+        padding: 0;
+    }
+}
+
+.page-title {
+    color: var(--timer);
+    font-size: 5vw;
+    text-align: center;
+}
+
+.help-bindings {
+    margin: -1.75vw auto;
+    border-collapse: separate;
+    border-spacing: 0 1.75vw;
+}
+
+.help-binding--key {
+    color: var(--purpose);
+    font-size: 3vw;
+    padding-right: 2.5vw;
+}
+
+.help-binding--def {
+    color: var(--timer);
+    font-size: 3vw;
 }

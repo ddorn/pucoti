@@ -6,9 +6,9 @@
       </div>
     </template>
 
-    <input type="text" ref="intention" placeholder="Intention?" class="scale-max-size" style="height: 20vh" @keydown="intentionKeydown"/>
+    <input id="intention" type="text" ref="intention" placeholder="Intention?" class="scale-max-size" style="height: 20vh" @keydown="intentionKeydown"/>
 
-    <Timer :timer="store.timers.main"/>
+    <Timer id="main-timer" :timer="store.timers.main"/>
 
     <footer class="timer-row" :style="{ gridTemplateColumns: `repeat(${store.secondaryTimers.length}, 1fr)` }">
       <!-- TODO: CSS here -->
@@ -58,8 +58,7 @@ function handleKeybindings(e) {
       store.ringTime = new Date().getTime() + store.countdownDuration;
       break;
     case "h":
-      router.push("/help").then(() => console.log("pushed help really"));
-      console.log("pushed help");
+      router.push("/help");
       break;
     case "s":
       router.push("/settings");
