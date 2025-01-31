@@ -1,7 +1,5 @@
 <template>
-    <div class="timer-container scale-max-size">
-        <span class="timer-value" :style="{ 'color': color }">{{ shownTime }}</span>
-    </div>
+    <span :style="{ 'color': color }">{{ shownTime }}</span>
 </template>
 
 <script setup lang="ts">
@@ -33,3 +31,10 @@ onUnmounted(() => {
 });
 
 </script>
+
+<style scoped>
+
+span {
+    font-weight: 900;
+}
+</style>

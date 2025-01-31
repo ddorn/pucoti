@@ -34,34 +34,11 @@ body {
     padding: 0;
     margin: 0;
     background-color: black;
+    color: white;
 }
 
 #app {
   min-height: 100vh;
-}
-
-#main-timer {
-    width: 100%;
-    color: var(--timer);
-    font-weight: 900;
-    height: 60vh;
-    padding: 1rem;
-}
-
-#intention {
-    background: transparent;
-    border: none;
-    color: var(--purpose);
-    padding: 0.5rem 1rem;
-    width: 100%;
-    text-align: center;
-    overflow: hidden;
-}
-
-#intention::placeholder {
-    color: var(--purpose);
-    opacity: 0.4;
-    padding: 1rem;
 }
 
 .timer-row {
@@ -69,22 +46,6 @@ body {
     justify-content: space-around;
     height: 20vh;
 }
-
-.timer-container {
-    /* border: 1px solid blue; */
-    /* width: calc(100% / 3); */
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    text-align: center;
-}
-
-.timer-value {
-    /* display: block; */
-    flex: 1;
-    /* border: 1px solid white; */
-}
-
 .timer-label {
     border: 1px solid yellowgreen;
 }
@@ -106,16 +67,6 @@ body {
   top: -1000px;
   left: -1000px;
 } */
-
-@media (width <=400px) {
-
-    #intention,
-    #intention::placeholder,
-    #main-timer {
-        padding: 0;
-    }
-}
-
 .page-title {
     color: var(--timer);
     font-size: 5vw;

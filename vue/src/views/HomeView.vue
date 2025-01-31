@@ -3,10 +3,14 @@
 
     <input id="intention" type="text" ref="intention" placeholder="Intention?" class="scale-max-size" style="height: 20vh" @keydown="intentionKeydown"/>
 
-    <Timer id="main-timer" :timer="store.timers.main"/>
+    <CenteredChild id="main-timer" class="scale-max-size">
+      <Timer :timer="store.timers.main"/>
+    </CenteredChild>
 
     <footer class="timer-row" :style="{ gridTemplateColumns: `repeat(${store.secondaryTimers.length}, 1fr)` }">
-      <Timer v-for="timer in store.secondaryTimers" :timer="store.timers[timer]" :key="timer"/>
+      <CenteredChild v-for="timer in store.secondaryTimers" :key="timer" class="scale-max-size">
+        <Timer :timer="store.timers[timer]" />
+      </CenteredChild>
     </footer>
   </div>
 </template>
@@ -18,6 +22,7 @@ import { scaleMaxSize, scaleMaxSizeAll } from '@/lib';
 import router from '@/router/router';
 import Timer from '@/components/Timer.vue';
 import { MINUTE } from '@/timeUtils';
+import CenteredChild from '@/components/CenteredChild.vue';
 
 const store = usePucotiStore();
 const $intention = useTemplateRef<HTMLElement>("intention");
@@ -97,3 +102,41 @@ function intentionKeydown(e: KeyboardEvent) {
   window.requestAnimationFrame(() => scaleMaxSize(e.target));
 };
 </script>
+
+
+<style>
+
+#main-timer {
+    width: 100%;
+    color: var(--timer);
+    font-weight: 900;
+    height: 60vh;
+    padding: 1rem;
+}
+
+#intention {
+    background: transparent;
+    border: none;
+    color: var(--purpose);
+    padding: 0.5rem 1rem;
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+}
+
+#intention::placeholder {
+    color: var(--purpose);
+    opacity: 0.4;
+    padding: 1rem;
+}
+
+@media (width <=400px) {
+
+    #intention,
+    #intention::placeholder,
+    #main-timer {
+        padding: 0;
+    }
+}
+
+</style>
