@@ -9,11 +9,11 @@ export const MINUTE = 60 * 1000;
  * @param {number} time Duration in seconds
  * @returns {string[]} Array of strings representing the time in the format [hours, minutes, seconds]. Hours is there only if it's not 0
  */
-export function fmtSeconds(time) {
-  let seconds = Math.floor(Math.abs(time) / 1000);
-  let minutes = Math.floor(seconds / 60);
-  let hours = Math.floor(minutes / 60);
-  let parts = [];
+export function fmtSeconds(time: number) {
+  const seconds = Math.floor(Math.abs(time) / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const parts = [];
   if (hours > 0) {
     parts.push(hours);
   }
@@ -30,27 +30,25 @@ export function fmtSeconds(time) {
  *
  * @see https://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
  */
-export function getTextMetrics(el, fontSizeOverride) {
+export function getTextMetrics(el: HTMLElement, fontSizeOverride: string) {
   // re-use canvas object for better performance
-  let canvas =
-    getTextMetrics.canvas ||
-    (getTextMetrics.canvas = document.createElement("canvas"));
-  let context = canvas.getContext("2d");
+  const canvas = getTextMetrics.canvas || (getTextMetrics.canvas = document.createElement("canvas"));
+  const context = canvas.getContext("2d");
 
-  let fontWeight = getCssStyle(el, "font-weight") || "normal";
-  let fontSize = fontSizeOverride || getCssStyle(el, "font-size");
-  let fontFamily = getCssStyle(el, "font-family") || "Times New Roman";
+  const fontWeight = getCssStyle(el, "font-weight") || "normal";
+  const fontSize = fontSizeOverride || getCssStyle(el, "font-size");
+  const fontFamily = getCssStyle(el, "font-family") || "Times New Roman";
   context.font = `${fontWeight} ${fontSize} ${fontFamily}`;
 
-  let text = el.innerText || el.value || el.getAttribute("placeholder");
+  const text = el.innerText || el.value || el.getAttribute("placeholder");
 
-  let metrics = context.measureText(text);
+  const metrics = context.measureText(text);
   metrics.actualHeight =
     metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
   return metrics;
 }
 
-export function getCssStyle(element, prop) {
+export function getCssStyle(element: HTMLElement, prop: string) {
   return window.getComputedStyle(element, null).getPropertyValue(prop);
 }
 
@@ -59,24 +57,24 @@ export function getCssStyle(element, prop) {
  *
  * @param {HTMLElement} element
  */
-export function scaleMaxSize(element) {
+export function scaleMaxSize(element: HTMLElement) {
   let fontSizeLower = 0;
   let fontSizeUpper = 2000;
 
   // Actual available, without the padding.lib.
-  let width =
+  const width =
     element.clientWidth -
     parseFloat(getCssStyle(element, "padding-left")) -
     parseFloat(getCssStyle(element, "padding-right"));
-  let height =
+  const height =
     element.clientHeight -
     parseFloat(getCssStyle(element, "padding-top")) -
     parseFloat(getCssStyle(element, "padding-bottom"));
 
   // Simple binary search to find the largest font size that fits
   while (fontSizeUpper > fontSizeLower + 1) {
-    let fontSize = Math.floor((fontSizeUpper + fontSizeLower) / 2);
-    let metrics = getTextMetrics(element, fontSize + "px");
+    const fontSize = Math.floor((fontSizeUpper + fontSizeLower) / 2);
+    const metrics = getTextMetrics(element, fontSize + "px");
     if (metrics.width > width || metrics.actualHeight > height) {
       fontSizeUpper = fontSize;
     } else {
@@ -122,7 +120,7 @@ Neutralino.events.on("spawnedProcess", (evt) => {
  * @param {string} duration - The duration string to convert
  * @returns {number} The duration in miliseconds
  */
-export function humanTimeToMs(duration) {
+export function humanTimeToMs(duration: string): number {
   if (duration.startsWith("-")) {
     return -humanTimeToMs(duration.slice(1));
   }
@@ -132,7 +130,7 @@ export function humanTimeToMs(duration) {
   const multiplier = { s: 1, m: 60, h: 3600, d: 86400 };
 
   const parts = duration.split(" ");
-  for (let part of parts) {
+  for (const part of parts) {
     try {
       const value = parseInt(part.slice(0, -1));
       const unit = part.slice(-1);

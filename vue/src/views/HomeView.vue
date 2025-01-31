@@ -40,7 +40,7 @@ onMounted(() => {
 
 
 
-function handleKeybindings(e) {
+function handleKeybindings(e: KeyboardEvent) {
   switch (e.key) {
     case "j":
       store.ringTime -= MINUTE;
@@ -95,7 +95,7 @@ onUnmounted(() => {
   clearInterval(redrawHandle);
 });
 
-function intentionKeydown(e) {
+function intentionKeydown(e: KeyboardEvent) {
   e.stopPropagation();
   if (e.key === "Enter") {
     store.setIntention(e.target.value);

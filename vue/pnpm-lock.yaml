@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@neutralinojs/lib':
+        specifier: ^5.5.0
+        version: 5.5.0
       pinia:
         specifier: ^2.3.1
         version: 2.3.1(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
@@ -430,6 +433,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
+
+  '@neutralinojs/lib@5.5.0':
+    resolution: {integrity: sha512-cj9AyN2ix3L2o7gZaAo9mCg0ZkDtRjfFwRtPehxaAWv9AI8uldwp4Yy+vRONAkYlFPsFw26iCtHhuCU00/WCCA==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -1981,6 +1987,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  '@neutralinojs/lib@5.5.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:

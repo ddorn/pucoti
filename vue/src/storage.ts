@@ -76,4 +76,4 @@ class EntrepriseLocalFilesystemStrategy {
   }
 }
 
-window.Storage = new Storage();
+// window.Storage = new Storage();
