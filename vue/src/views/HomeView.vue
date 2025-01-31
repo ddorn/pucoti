@@ -22,7 +22,7 @@
 import { onMounted, onUnmounted, useTemplateRef } from 'vue';
 import { usePucotiStore } from '@/stores/counter';
 import { MINUTE, scaleMaxSize, scaleMaxSizeAll } from '@/lib';
-import router from '@/router';
+import router from '@/router/router';
 import Timer from '@/components/Timer.vue';
 
 const store = usePucotiStore();
@@ -58,7 +58,8 @@ function handleKeybindings(e) {
       store.ringTime = new Date().getTime() + store.countdownDuration;
       break;
     case "h":
-      router.push("/help");
+      router.push("/help").then(() => console.log("pushed help really"));
+      console.log("pushed help");
       break;
     case "s":
       router.push("/settings");

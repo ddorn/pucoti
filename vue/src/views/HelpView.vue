@@ -73,10 +73,24 @@
 
 </template>
 
-<script lang="ts">
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" || e.key == "h") {
-    switchToPage("home");  // TODO
+<script setup lang="ts">
+import router from '@/router/router';
+import { onMounted, onUnmounted } from 'vue';
+
+
+function handleKeybindings(e) {
+  if (e.key === "h" || e.key === "Escape") {
+    router.push("/");
   }
+}
+
+onMounted(() => {
+  document.addEventListener("keydown", handleKeybindings);
 });
+onUnmounted(() => {
+  document.removeEventListener("keydown", handleKeybindings);
+});
+
+
+
 </script>
