@@ -1,19 +1,12 @@
 <template>
   <div ref="home" style="overflow: hidden">
-    <template ref="timer-template">
-      <div class="timer-container scale-max-size">
-        <span class="timer-value">000:00</span>
-      </div>
-    </template>
 
     <input id="intention" type="text" ref="intention" placeholder="Intention?" class="scale-max-size" style="height: 20vh" @keydown="intentionKeydown"/>
 
     <Timer id="main-timer" :timer="store.timers.main"/>
 
     <footer class="timer-row" :style="{ gridTemplateColumns: `repeat(${store.secondaryTimers.length}, 1fr)` }">
-      <!-- TODO: CSS here -->
       <Timer v-for="timer in store.secondaryTimers" :timer="store.timers[timer]" :key="timer"/>
-
     </footer>
   </div>
 </template>

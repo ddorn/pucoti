@@ -94,25 +94,6 @@ export function scaleMaxSizeAll() {
 // Run the scaling every time the window is resized
 // window.addEventListener("resize", scaleMaxSizeAll);  // TODO
 
-// Log everything about spawned processes
-/*
-Neutralino.events.on("spawnedProcess", (evt) => {
-  switch (evt.detail.action) {
-    case "stdOut":
-      console.log(evt.detail.id, evt.detail.data);
-      break;
-    case "stdErr":
-      console.error(evt.detail.id, evt.detail.data);
-      break;
-    case "exit":
-      console.log(
-        `Process ${evt.details.id} exited with code ${evt.detail.code}`,
-      );
-      break;
-  }
-});
-*/
-
 // Time utils
 
 /**

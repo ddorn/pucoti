@@ -3,8 +3,8 @@ import { RouterView } from 'vue-router'
 import { usePucotiStore } from './stores/counter';
 import { onUnmounted } from 'vue';
 import { humanTimeToMs } from './lib';
-import Neutralino from '@neutralinojs/lib';
 import router from './router/router';
+import { runCmd } from './platform';
 
 const store = usePucotiStore();
 
@@ -32,7 +32,7 @@ function checkTime() {
       if (now - cmd.lastRan > humanTimeToMs(cmd.every)) {
         cmd.lastRan = now;
         try {
-          Neutralino.os.spawnProcess(cmd.cmd);
+          runCmd(cmd.cmd);
         } catch (e) {
           console.error(`Could not run command: ${cmd.cmd}`, e);
         }

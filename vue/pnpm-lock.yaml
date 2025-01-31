@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@neutralinojs/lib':
-        specifier: ^5.5.0
+        specifier: '==5.5.0'
         version: 5.5.0
       pinia:
         specifier: ^2.3.1
