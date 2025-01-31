@@ -3,93 +3,30 @@
     <h1 class="page-title">PUCOTI Bindings</h1>
 
     <table class="help-bindings">
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>j</kbd> <kbd>k</kbd></td>
-        <td class="help-binding--def">-/+ 1 minute</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>J</kbd> <kbd>K</kbd></td>
-        <td class="help-binding--def">-/+ 5 minutes</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>0</kbd>-<kbd>9</kbd></td>
-        <td class="help-binding--def">set duration</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key">shift 0-9</td>
-        <td class="help-binding--def">set duration *10min</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>R</kbd></td>
-        <td class="help-binding--def">reset timer</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>Return</kbd></td>
-        <td class="help-binding--def">enter purpose</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>L</kbd></td>
-        <td class="help-binding--def">list purpose history</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key">T</td>
-        <td class="help-binding--def">toggle total time</td>
-      </tr>
-
-      <!--
-    <tr class="help-binding--wrapper">
-      <td class="help-binding--key">P</td>
-      <td class="help-binding--def">reposition window</td>
-    </tr>
-    <tr class="help-binding--wrapper">
-      <td class="help-binding--key"><kbd>-</kbd> <kbd>+</kbd></td>
-      <td class="help-binding--def">(in/de)crease window size</td>
-    </tr> -->
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>h</kbd></td>
-        <td class="help-binding--def">toggle this help</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>0</kbd>-<kbd>9</kbd></td>
-        <td class="help-binding--def">set duration</td>
-      </tr>
-
-      <tr class="help-binding--wrapper">
-        <td class="help-binding--key"><kbd>0</kbd>-<kbd>9</kbd></td>
-        <td class="help-binding--def">set duration</td>
+      <tr v-for="binding in bindings" :key="binding.key" class="help-binding--wrapper" >
+        <td class="help-binding--key"><kbd>{{ binding.key }}</kbd></td>
+        <td class="help-binding--def">{{ binding.def }}</td>
       </tr>
     </table>
-
   </div>
-
 </template>
 
 <script setup lang="ts">
-import router from '@/router/router';
-import { onMounted, onUnmounted } from 'vue';
 
 
-function handleKeybindings(e) {
-  if (e.key === "h" || e.key === "Escape") {
-    router.push("/");
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("keydown", handleKeybindings);
-});
-onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeybindings);
-});
+const bindings = [
+  { key: "j k", def: "-/+ 1 minute" },
+  { key: "J K", def: "-/+ 5 minutes" },
+  { key: "0-9", def: "set duration" },
+  { key: "shift 0-9", def: "set duration *10min" },
+  { key: "r", def: "reset timer" },
+  { key: "Return", def: "enter intention" },
+  { key: "i", def: "toggle intention history" },
+  // { key: "T", def: "toggle total time" },
+  { key: "h", def: "toggle this help" },
+  { key: "s", def: "toggle settings" },
+  { key: "Escape", def: "go back"},
+];
 
 
 
