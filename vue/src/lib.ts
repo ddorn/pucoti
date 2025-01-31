@@ -1,25 +1,10 @@
-export const MINUTE = 60 * 1000;
+
 
 /**
- * Format a time in seconds to the parts of a string.
- *
- * Example: 3661 -> ["1", "01", "01"]
- * Example: 61 -> ["01", "01"]
- *
- * @param {number} time Duration in seconds
- * @returns {string[]} Array of strings representing the time in the format [hours, minutes, seconds]. Hours is there only if it's not 0
+ * Send a clock tick event to all elements, to update all the displays at the same time.
  */
-export function fmtSeconds(time: number) {
-  const seconds = Math.floor(Math.abs(time) / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const parts = [];
-  if (hours > 0) {
-    parts.push(hours);
-  }
-  parts.push((minutes % 60).toString().padStart(2, "0"));
-  parts.push((seconds % 60).toString().padStart(2, "0"));
-  return parts;
+export function tickClock() {
+  document.dispatchEvent(new Event("clock-tick"));
 }
 
 /**
@@ -93,38 +78,3 @@ export function scaleMaxSizeAll() {
 
 // Run the scaling every time the window is resized
 // window.addEventListener("resize", scaleMaxSizeAll);  // TODO
-
-// Time utils
-
-/**
- * Convert a human duration such as "1h 30m" to seconds.
- * @param {string} duration - The duration string to convert
- * @returns {number} The duration in miliseconds
- */
-export function humanTimeToMs(duration: string): number {
-  if (duration.startsWith("-")) {
-    return -humanTimeToMs(duration.slice(1));
-  }
-
-  // Parse the duration.
-  let total = 0;
-  const multiplier = { s: 1, m: 60, h: 3600, d: 86400 };
-
-  const parts = duration.split(" ");
-  for (const part of parts) {
-    try {
-      const value = parseInt(part.slice(0, -1));
-      const unit = part.slice(-1);
-
-      if (isNaN(value) || !(unit in multiplier)) {
-        throw new Error(`Invalid duration part: ${part}`);
-      }
-
-      total += value * multiplier[unit];
-    } catch (error) {
-      throw new Error(`Invalid duration part: ${part}`);
-    }
-  }
-
-  return total * 1000;
-}

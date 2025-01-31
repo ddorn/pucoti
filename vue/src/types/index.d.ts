@@ -1,10 +1,12 @@
 export type IntentionHistoryItem = {
   intention: string;
   start: number;
+  end?: number;
 }
 
 export type Timer = {
-  value: number;
+  zeroAt: number;
+  increasing: boolean;
   color: string;
   name: string;
 }

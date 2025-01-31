@@ -13,10 +13,11 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, useTemplateRef } from 'vue';
-import { usePucotiStore } from '@/stores/counter';
-import { MINUTE, scaleMaxSize, scaleMaxSizeAll } from '@/lib';
+import { usePucotiStore } from '@/stores/pucotiStore';
+import { scaleMaxSize, scaleMaxSizeAll } from '@/lib';
 import router from '@/router/router';
 import Timer from '@/components/Timer.vue';
+import { MINUTE } from '@/timeUtils';
 
 const store = usePucotiStore();
 const $intention = useTemplateRef<HTMLElement>("intention");
@@ -36,19 +37,19 @@ onMounted(() => {
 function handleKeybindings(e: KeyboardEvent) {
   switch (e.key) {
     case "j":
-      store.ringTime -= MINUTE;
+      store.addTime(-MINUTE)
       break;
     case "J":
-      store.ringTime -= 5 * MINUTE;
+      store.addTime(-5 * MINUTE)
       break;
     case "k":
-      store.ringTime += MINUTE;
+      store.addTime(MINUTE)
       break;
     case "K":
-      store.ringTime += 5 * MINUTE;
+      store.addTime(5 * MINUTE)
       break;
     case "r":
-      store.ringTime = new Date().getTime() + store.countdownDuration;
+      store.setRingIn(store.countdownDuration);
       break;
     case "h":
       router.push("/help");
@@ -70,7 +71,7 @@ function handleKeybindings(e: KeyboardEvent) {
         if (e.shiftKey) {
           digit *= 10;
         }
-        store.ringTime = new Date().getTime() + digit * MINUTE;
+        store.setRingIn(digit * MINUTE);
         store.countdownDuration = digit * MINUTE;
       } else {
         return;
@@ -78,7 +79,6 @@ function handleKeybindings(e: KeyboardEvent) {
   }
 
   e.preventDefault();
-  store.updateTimers();
   redraw();
 };
 

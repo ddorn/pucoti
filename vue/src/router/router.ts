@@ -18,6 +18,11 @@ const router = createRouter({
       path: '/settings',
       name: 'settings',
       component: () => import('../views/SettingsView.vue'),
+    },
+    {
+      path: '/intentionhistory',
+      name: 'intentionhistory',
+      component: () => import('../views/IntentionHistoryView.vue'),
     }
   ],
 })

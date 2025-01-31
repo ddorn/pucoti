@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { usePucotiStore } from './stores/counter';
+import { usePucotiStore } from './stores/pucotiStore';
 import { onUnmounted } from 'vue';
-import { humanTimeToMs } from './lib';
+import { humanTimeToMs } from './timeUtils';
 import router from './router/router';
 import { runCmd } from './platform';
+import { tickClock } from './lib';
 
 const store = usePucotiStore();
 
@@ -13,8 +14,8 @@ store.setIntention("");
 const audio = new Audio("/bell.mp3");
 
 function checkTime() {
-  const now = new Date().getTime();
-  const timeOnCountdown = store.ringTime - now;
+  const now = Date.now();
+  const timeOnCountdown = store.timers.main.zeroAt - now;
   if (timeOnCountdown <= 0) {
     if (now - store.lastRung > humanTimeToMs(store.ringEvery)) {
       store.lastRung = now;
@@ -27,8 +28,9 @@ function checkTime() {
 
   // Check if any command should run
   store.commands.forEach((cmd) => {
-    const runTime = -humanTimeToMs(cmd.at) + store.ringTime;
-    if (now > runTime) {
+    const runAt = store.timers.main.zeroAt - humanTimeToMs(cmd.at);
+    if (now > runAt) {
+      console.log(now - cmd.lastRan, humanTimeToMs(cmd.every), cmd.lastRan);
       if (now - cmd.lastRan > humanTimeToMs(cmd.every)) {
         cmd.lastRan = now;
         try {
@@ -70,7 +72,8 @@ function handleKeybindings(e: KeyboardEvent) {
 }
 
 const handle = setInterval(() => {
-  store.updateTimers();
+  // Send a signal to all timers to update
+  tickClock();
 }, 1000);
 const handle2 = setInterval(checkTime, 500);
 document.addEventListener("keydown", handleKeybindings);
