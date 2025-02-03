@@ -60,7 +60,7 @@ minor: check_git_status version_minor commit_version_bump wheel
 major: check_git_status version_major commit_version_bump wheel
 
 publish:
-	poetry publish
+	hatch publish
 
 clean:
 	rm -r build
