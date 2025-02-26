@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from pathlib import Path
+import threading
 from typing import Annotated
 import typer
 from click.core import ParameterSource
@@ -36,22 +37,11 @@ import luckypot
 from . import constants
 from . import platforms
 from . import pygame_utils
-from . import time_utils
 from .config import PucotiConfig, RunAtConfig, SocialConfig
-from .screens.base_screen import PucotiScreen, Context
+from .screens.base_screen import PucotiScreen
 from .screens.start_screen import StartScreen
-
-
-class PucotiControler:
-
-    def get_ctx(self) -> Context:
-        return App.current_state.ctx
-
-    def set_purpose(self, purpose: str):
-        self.get_ctx().set_purpose(purpose)
-
-    def set_timer(self, timer: str):
-        self.get_ctx().set_timer_to(time_utils.human_duration(timer))
+from .context import Context
+from .controller import server as controller_server, cli as controller_cli
 
 
 class App(luckypot.App[PucotiScreen]):
@@ -80,7 +70,7 @@ class App(luckypot.App[PucotiScreen]):
         if config.window.initial_position not in self.window_positions:
             self.window_positions.insert(0, config.window.initial_position)
 
-        # self.controler = PucotiControler()  # TODO
+        threading.Thread(target=controller_server).start()
 
     @property
     def INITIAL_STATE(self):
@@ -166,7 +156,7 @@ app = typer.Typer(add_completion=False)
     help="Stay on task with PUCOTI, a countdown timer built for simplicity and purpose.\n\nGUI Shortcuts:\n\n"
     + constants.SHORTCUTS.replace("\n", "\n\n")
 )
-def main(
+def run(
     # fmt: off
     ctx: typer.Context,
     initial_timer: Annotated[str, doc("initial_timer", argument=True)] = defaults.initial_timer,
@@ -203,6 +193,9 @@ def main(
             config = config.merge_partial(data)
 
     App(config).run()
+
+
+app.add_typer(controller_cli, name="msg", no_args_is_help=True)
 
 
 if __name__ == "__main__":
