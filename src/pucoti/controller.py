@@ -1,69 +1,86 @@
 import functools
-import sys
 import threading
 import zmq
 import typer
-import shlex
 import traceback
 
-from pucoti import constants
-
-
-from . import app
+from . import constants
 from . import time_utils
 from .context import Context
-from typer.testing import CliRunner
 
 
 def get_ctx() -> Context:
+    from . import app
+
     try:
         return app.App.current_state().ctx
     except AttributeError:
         return None
 
 
-def send_message(*parts: str):
+def send_message(data: dict):
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect(f"tcp://localhost:{constants.CONTROLER_PORT}")
 
-    socket.send_string(shlex.join(parts))
-    message = socket.recv()
-    print(message.decode("utf-8"))
+    socket.send_json(data)
+    # Wait 1s for a response - or fail
+    socket.poll(timeout=1000)
+    try:
+        message = socket.recv(zmq.NOBLOCK).decode("utf-8")
+        print(message)
+    except zmq.ZMQError:
+        print("No response from controller. Is pucoti running?")
+    finally:
+        socket.close(0)
+        context.term()
 
 
-cli = typer.Typer()
+cli = typer.Typer(no_args_is_help=True, add_completion=False)
 
 
-def remote(func):
+COMMANDS = {}
+
+
+def remote_if_not_in_main_app(func):
+
+    COMMANDS[func.__name__] = func
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        try:
-            if not get_ctx():
-                args = sys.argv[1:]  # 0 is pucoti, 1 is "msg", 2+ are the arguments
-                send_message(*args)
-            else:
-                return func(*args, **kwargs)
-        except Exception as e:
-            traceback.print_exc()
-            print("Error:", e)
-            raise
+        if get_ctx():  # In the main pucoti instance
+            return func(*args, **kwargs)
+        else:  # As script to send message
+            send_message(
+                {
+                    "function": func.__name__,
+                    "args": args,
+                    "kwargs": kwargs,
+                }
+            )
 
     return wrapper
 
 
 @cli.command()
-@remote
+@remote_if_not_in_main_app
 def set_purpose(purpose: str):
+    """Set the pupose in the current pucoti session"""
     print(f"Controller: Setting purpose to {purpose}")
     get_ctx().set_purpose(purpose)
 
 
 @cli.command()
-@remote
+@remote_if_not_in_main_app
 def set_timer(timer: str):
+    """Set the timer in the current pucoti session. E.g. "1h 30m"."""
     print(f"Controller: Setting timer to {timer}")
     get_ctx().set_timer_to(time_utils.human_duration(timer))
+
+
+# @cli.command()
+# @remote_if_not_in_main_app
+# def task_track_from_marvin(timer: str, purpose: list[str]):
 
 
 class Controller:
@@ -82,7 +99,6 @@ class Controller:
     def server(self):
         context = zmq.Context()
         socket = context.socket(zmq.REP)
-        runner = CliRunner()
 
         try:
             socket.bind(f"tcp://*:{constants.CONTROLER_PORT}")
@@ -97,21 +113,23 @@ class Controller:
             # Check for messages - non-blocking
             socket.poll(timeout=400)
             try:
-                message = socket.recv(flags=zmq.NOBLOCK).decode("utf-8")
+                message = socket.recv_json(flags=zmq.NOBLOCK)
             except zmq.ZMQError:
                 continue
 
-            print("Received request: %s" % shlex.split(message))
+            print(f"Received request: {message}")
 
             try:
-                result = runner.invoke(cli, shlex.split(message))
-                if result.exit_code != 0:
-                    print("Result:", result)
-                    print("Exit code:", result.exit_code)
-                    print("Output:", result.stdout)
-                    raise Exception(result.stdout)
-                else:
-                    socket.send(b"OK")
+                match message:
+                    case {
+                        "function": func_name,
+                        "args": args,
+                        "kwargs": kwargs,
+                    }:
+                        func = COMMANDS[func_name]
+                        func(*args, **kwargs)
+                        socket.send(b"OK")
+
             except Exception as e:
                 traceback.print_exc()
                 socket.send(b"Error: " + str(e).encode("utf-8"))

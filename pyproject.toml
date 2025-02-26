@@ -37,6 +37,7 @@ Repository = "https://github.com/ddorn/pucoti"
 
 [project.scripts]
 pucoti = "pucoti.app:app"
+pucoti-msg = "pucoti.controller:cli"
 
 [build-system]
 requires = ["hatchling"]

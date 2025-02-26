@@ -40,7 +40,7 @@ from .config import PucotiConfig, RunAtConfig, SocialConfig
 from .screens.base_screen import PucotiScreen
 from .screens.start_screen import StartScreen
 from .context import Context
-from .controller import Controller, cli as controller_cli
+from .controller import Controller
 
 
 class App(luckypot.App[PucotiScreen]):
@@ -197,9 +197,6 @@ def run(
             config = config.merge_partial(data)
 
     App(config).run()
-
-
-app.add_typer(controller_cli, name="msg", no_args_is_help=True)
 
 
 if __name__ == "__main__":
