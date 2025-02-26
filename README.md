@@ -22,11 +22,11 @@ PUCOTI is straightforward and gets the job done. Give it a try.
 ## Screenshots
 
 ### *Pucoti can be big...*
-![Screenshot of PUCOTI full-screen](./assets/screenshot.webp)
+![Screenshot of PUCOTI full-screen](./images/screenshot.webp)
 ### *... or stay in a corner*
-![Screenshot of PUCOTI in the bottom right of a screen](./assets/screenshot-small.webp)
+![Screenshot of PUCOTI in the bottom right of a screen](./images/screenshot-small.webp)
 ### *Keep track of your intentions*
-![Screenshot of PUCOTI showing the history of intentions](./assets/screenshot-history.webp)
+![Screenshot of PUCOTI showing the history of intentions](./images/screenshot-history.webp)
 
 ## Installation
 
@@ -46,7 +46,7 @@ That's it! PUCOTI should now be up and running.
 
 ## Usage
 
-![Usage](./assets/cli-help.webp)
+![Usage](./images/cli-help.webp)
 
 
 ## Contributors
