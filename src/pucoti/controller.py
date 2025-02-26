@@ -78,9 +78,24 @@ def set_timer(timer: str):
     get_ctx().set_timer_to(time_utils.human_duration(timer))
 
 
-# @cli.command()
-# @remote_if_not_in_main_app
-# def task_track_from_marvin(timer: str, purpose: list[str]):
+@cli.command()
+@remote_if_not_in_main_app
+def task_track_from_marvin(timer: int, purpose: list[str]):
+    """Set the timer and purpose in the current pucoti session.
+
+    This was made specifically for use with Amazing Marvin to
+    set the purpose and timer of pucoti when you start tracking the time
+    in Marvin.
+
+    To use it, go to Marvin > Strategies > Start Time Tracking Task
+        and enter
+        pucoti-msg task-track-from-marvin $TASK_TIME_ESTIMATE $TASK_TITLE
+        Then follow the instructions in the app.
+    """
+
+    if timer:
+        get_ctx().set_timer_to(timer / 1000)
+    get_ctx().set_purpose(" ".join(purpose))
 
 
 class Controller:
