@@ -6,8 +6,8 @@ from . import main_screen
 
 
 class StartScreen(PucotiScreen):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, ctx):
+        super().__init__(ctx)
         self.timer = 0
 
     def logic(self):

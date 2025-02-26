@@ -9,8 +9,8 @@ from ..time_utils import fmt_duration
 
 class SocialScreen(PucotiScreen):
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, ctx) -> None:
+        super().__init__(ctx)
 
         self.vertical = False
 

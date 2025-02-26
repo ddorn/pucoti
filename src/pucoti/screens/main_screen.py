@@ -1,7 +1,6 @@
 import re
 from time import time
 from typing import Callable
-import threading
 
 import pygame
 import pygame.locals as pg
@@ -10,96 +9,34 @@ from luckypot import GFX
 from .. import time_utils
 from .. import pygame_utils
 from .. import constants
-from ..callback import CountdownCallback
-from ..server_comunication import UpdateRoomRequest, send_update
 from .base_screen import PucotiScreen, Context
 from . import help_screen, purpose_history_screen, social_screen
 from ..dfont import DFont
-from .. import db
 
 
 class MainScreen(PucotiScreen):
     def __init__(self, ctx: Context) -> None:
-        super().__init__()
-
-        self.initial_duration = time_utils.human_duration(ctx.config.initial_timer)
-        self.start = round(time())
-        self.timer_end = 0
-        """Timestamp when the timer hits 0."""
-        self.last_rung = 0
-        self.nb_rings = 0
-        self.callbacks = [CountdownCallback(cfg) for cfg in ctx.config.run_at]
+        super().__init__(ctx)
 
         self.hide_totals = False
-        self.set_timer_to(self.initial_duration)
-        ctx.set_purpose("", force=True)
 
         self.purpose_editor = TextEdit(
             initial_value=ctx.purpose_history[-1].text,
             color=ctx.config.color.purpose,
             font=ctx.config.font.normal,
-            submit_callback=self.set_purpose,
+            submit_callback=ctx.set_purpose,
         )
 
-        self.last_server_update = 0
-
     @property
-    def remaining_time(self) -> float:
-        return self.timer_end - (time() - self.start)
-
-    def set_purpose(self, purpose):
-        self.ctx.set_purpose(purpose)
-        self.update_servers()
-
-    def shift_timer(self, delta: float):
-        self.timer_end += delta
-        db.store(db.Action.set_timer(timer=self.remaining_time))
-
-    def set_timer_to(self, new_duration: float):
-        self.timer_end = time_utils.compute_timer_end(new_duration, self.start)
-        db.store(db.Action.set_timer(timer=new_duration))
-
-    @property
-    def purpose(self):
-        return self.ctx.purpose_history[-1].text
-
-    @property
-    def purpose_start_time(self):
-        return round(self.ctx.purpose_history[-1].timestamp)
-
-    def on_enter(self):
-        super().on_enter()
-        # Not in __init__ because the context is set after the state is pushed.
-        self.update_servers()
+    def timer_end(self):
+        return self.ctx.timer_end
 
     def on_exit(self):
         self.ctx.set_purpose("")
 
     def paused_logic(self):
-        remaining = self.timer_end - (time() - self.start)
-        if (
-            remaining < 0
-            and time() - self.last_rung > self.config.ring_every
-            and self.nb_rings != self.config.ring_count
-        ):
-            self.last_rung = time()
-            self.nb_rings += 1
-            pygame_utils.play(self.config.bell)
-            if self.config.restart:
-                # self.timer_end = self.initial_duration + (round(time() + 0.5) - self.start)
-                self.timer_end = time_utils.compute_timer_end(self.initial_duration, self.start)
-
-        elif remaining > 0:
-            self.nb_rings = 0
-            self.last_rung = 0
-
-        # And execute the callbacks.
-        for callback in self.callbacks:
-            callback.update(self.timer_end - (time() - self.start))
-
-        if self.last_server_update + constants.UPDATE_SERVER_EVERY < time():
-            self.last_server_update = time()
-            self.update_servers()
+        self.ctx.ring_if_needed()
+        self.ctx.update_servers(force=False)
 
         return super().paused_logic()
 
@@ -118,26 +55,26 @@ class MainScreen(PucotiScreen):
         match event.key:
             case pg.K_j:
                 delta = -60 * 5 if pygame_utils.shift_is_pressed(event) else -60
-                self.shift_timer(delta)
+                self.ctx.shift_timer(delta)
             case pg.K_k:
                 delta = 60 * 5 if pygame_utils.shift_is_pressed(event) else 60
-                self.shift_timer(delta)
+                self.ctx.shift_timer(delta)
             case number if number in constants.NUMBER_KEYS:
                 new_duration = 60 * pygame_utils.get_number_from_key(number)
                 if pygame_utils.shift_is_pressed(event):
                     new_duration *= 10
-                self.set_timer_to(new_duration)
+                self.ctx.set_timer_to(new_duration)
                 self.initial_duration = new_duration
             case pg.K_r:
-                self.set_timer_to(self.initial_duration)
+                self.ctx.set_timer_to(self.initial_duration)
             case pg.K_t:
                 self.hide_totals = not self.hide_totals
             case pg.K_h | pg.K_QUESTION:
-                self.push_state(help_screen.HelpScreen())
+                self.push_state(help_screen.HelpScreen(self.ctx))
             case pg.K_l:
-                self.push_state(purpose_history_screen.PurposeHistoryScreen())
+                self.push_state(purpose_history_screen.PurposeHistoryScreen(self.ctx))
             case pg.K_s:
-                self.push_state(social_screen.SocialScreen())
+                self.push_state(social_screen.SocialScreen(self.ctx))
             case _:
                 return super().handle_event(event)
         return True
@@ -161,7 +98,7 @@ class MainScreen(PucotiScreen):
             else:
                 layout = {"purpose": 1, "time": 2, "totals": 1}
 
-            if not self.purpose:
+            if not self.ctx.purpose:
                 layout["time"] += layout.pop("purpose", 0)
 
         if self.hide_totals:
@@ -185,7 +122,7 @@ class MainScreen(PucotiScreen):
         layout = self.layout()
 
         # Render time.
-        remaining = self.remaining_time  # locked
+        remaining = self.ctx.remaining_time  # locked
         if time_rect := layout.get("time"):
             color = self.config.color.timer_up if remaining < 0 else self.config.color.timer
             t = self.config.font.big.render(
@@ -198,7 +135,7 @@ class MainScreen(PucotiScreen):
 
         if total_time_rect := layout.get("total_time"):
             t = self.config.font.normal.render(
-                time_utils.fmt_duration(time() - self.start),
+                time_utils.fmt_duration(time() - self.ctx.start),
                 total_time_rect.size,
                 self.config.color.total_time,
                 monospaced_time=True,
@@ -207,7 +144,7 @@ class MainScreen(PucotiScreen):
 
         if purpose_time_rect := layout.get("purpose_time"):
             t = self.config.font.normal.render(
-                time_utils.fmt_duration(time() - self.purpose_start_time),
+                time_utils.fmt_duration(time() - self.ctx.purpose_start_time),
                 purpose_time_rect.size,
                 self.config.color.purpose,
                 monospaced_time=True,
@@ -216,23 +153,6 @@ class MainScreen(PucotiScreen):
 
         if purpose_rect := layout.get("purpose"):
             self.purpose_editor.draw(gfx, purpose_rect)
-
-    def update_servers(self):
-        social = self.config.social
-        if social.enabled:
-            payload = UpdateRoomRequest(
-                username=social.username,
-                timer_end=self.timer_end,
-                start=self.start,
-                purpose=self.purpose if social.send_purpose else None,
-                purpose_start=self.purpose_start_time if social.send_purpose else None,
-            )
-
-            def send_update_thread():
-                data = send_update(social.server, social.room, constants.USER_ID, payload)
-                self.ctx.friend_activity = data
-
-            threading.Thread(target=send_update_thread).start()
 
 
 class TextEdit:

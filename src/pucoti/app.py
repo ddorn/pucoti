@@ -36,14 +36,27 @@ import luckypot
 from . import constants
 from . import platforms
 from . import pygame_utils
+from . import time_utils
 from .config import PucotiConfig, RunAtConfig, SocialConfig
 from .screens.base_screen import PucotiScreen, Context
 from .screens.start_screen import StartScreen
 
 
+class PucotiControler:
+
+    def get_ctx(self) -> Context:
+        return App.current_state.ctx
+
+    def set_purpose(self, purpose: str):
+        self.get_ctx().set_purpose(purpose)
+
+    def set_timer(self, timer: str):
+        self.get_ctx().set_timer_to(time_utils.human_duration(timer))
+
+
 class App(luckypot.App[PucotiScreen]):
     NAME = "PUCOTI"
-    INITIAL_STATE = StartScreen
+    # INITIAL_STATE = StartScreen
 
     def __init__(self, config: PucotiConfig):
         self.config = config
@@ -66,6 +79,12 @@ class App(luckypot.App[PucotiScreen]):
         self.window_positions = list(constants.POSITIONS)
         if config.window.initial_position not in self.window_positions:
             self.window_positions.insert(0, config.window.initial_position)
+
+        # self.controler = PucotiControler()  # TODO
+
+    @property
+    def INITIAL_STATE(self):
+        return lambda: StartScreen(self.ctx)
 
     @property
     def current_window_position(self):

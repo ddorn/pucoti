@@ -8,8 +8,8 @@ from .base_screen import PucotiScreen
 
 
 class PurposeHistoryScreen(PucotiScreen):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, ctx) -> None:
+        super().__init__(ctx)
 
         self.history_lines = 10
         self.history_scroll = 0  # From the bottom
