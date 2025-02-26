@@ -15,6 +15,8 @@ DATA_DIR = Path(DIRS.user_data_dir)
 DB_PATH = Path(DIRS.user_data_dir) / "pucoti.db"
 print(f"Configuration file: {CONFIG_PATH}")
 
+CONTROLER_PORT = 8421
+
 ASSETS = Path(__file__).parent / "assets"
 BELL = ASSETS / "bell.mp3"
 BIG_FONT = ASSETS / "Bevan-Regular.ttf"

@@ -6,6 +6,8 @@ import typer
 import shlex
 import traceback
 
+from pucoti import constants
+
 
 from . import app
 from . import time_utils
@@ -23,7 +25,7 @@ def get_ctx() -> Context:
 def send_message(*parts: str):
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
-    socket.connect("tcp://localhost:5555")
+    socket.connect(f"tcp://localhost:{constants.CONTROLER_PORT}")
 
     socket.send_string(shlex.join(parts))
     message = socket.recv()
@@ -82,29 +84,37 @@ class Controller:
         socket = context.socket(zmq.REP)
         runner = CliRunner()
 
-        with socket.bind("tcp://*:5555"):
-            while not self.stop_event.is_set():
-                # Check for messages - non-blocking
-                socket.poll(timeout=1000)
-                try:
-                    message = socket.recv(flags=zmq.NOBLOCK).decode("utf-8")
-                except zmq.ZMQError:
-                    continue
+        try:
+            socket.bind(f"tcp://*:{constants.CONTROLER_PORT}")
+        except zmq.error.ZMQError as e:
+            print("Error:", e)
+            print(
+                "An other instance of Pucoti might be running. Not starting remote controller for this one."
+            )
+            return
 
-                print("Received request: %s" % shlex.split(message))
+        while not self.stop_event.is_set():
+            # Check for messages - non-blocking
+            socket.poll(timeout=400)
+            try:
+                message = socket.recv(flags=zmq.NOBLOCK).decode("utf-8")
+            except zmq.ZMQError:
+                continue
 
-                try:
-                    result = runner.invoke(cli, shlex.split(message))
-                    if result.exit_code != 0:
-                        print("Result:", result)
-                        print("Exit code:", result.exit_code)
-                        print("Output:", result.stdout)
-                        raise Exception(result.stdout)
-                    else:
-                        socket.send(b"OK")
-                except Exception as e:
-                    traceback.print_exc()
-                    socket.send(b"Error: " + str(e).encode("utf-8"))
+            print("Received request: %s" % shlex.split(message))
+
+            try:
+                result = runner.invoke(cli, shlex.split(message))
+                if result.exit_code != 0:
+                    print("Result:", result)
+                    print("Exit code:", result.exit_code)
+                    print("Output:", result.stdout)
+                    raise Exception(result.stdout)
+                else:
+                    socket.send(b"OK")
+            except Exception as e:
+                traceback.print_exc()
+                socket.send(b"Error: " + str(e).encode("utf-8"))
 
 
 if __name__ == "__main__":
