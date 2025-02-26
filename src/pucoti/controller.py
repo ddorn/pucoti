@@ -98,6 +98,24 @@ def task_track_from_marvin(timer: int, purpose: list[str]):
     get_ctx().set_purpose(" ".join(purpose))
 
 
+@cli.command()
+@remote_if_not_in_main_app
+def mark_done_from_marvin(task: list[str]):
+    """End the current purpose when a Marvin task with the same name is marked as done.
+
+    To use it, go to Marvin > Strategies > Task Completed and enter
+        pucoti-msg mark-done-from-marvin $TASK_TITLE
+        Then follow the instructions in the app.
+    """
+
+    ctx = get_ctx()
+    if ctx.purpose == " ".join(task):
+        ctx.set_purpose("")
+    else:
+        print("Purpose does not match current task.")
+        print(f"Current purpose: {ctx.purpose}")
+
+
 class Controller:
     def __init__(self):
         self.stop_event = threading.Event()
