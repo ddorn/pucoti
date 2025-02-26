@@ -1,5 +1,6 @@
 import functools
 import sys
+import threading
 import zmq
 import typer
 import shlex
@@ -63,34 +64,47 @@ def set_timer(timer: str):
     get_ctx().set_timer_to(time_utils.human_duration(timer))
 
 
-@cli.command()
-def server():
-    context = zmq.Context()
-    socket = context.socket(zmq.REP)
-    socket.bind("tcp://*:5555")
+class Controller:
+    def __init__(self):
+        self.stop_event = threading.Event()
+        self.handle = None
 
-    runner = CliRunner()
+    def start(self):
+        self.handle = threading.Thread(target=self.server).start()
 
-    while True:
-        message = socket.recv()
-        print("Received request: %s" % message)
+    def stop(self):
+        self.stop_event.set()
+        if self.handle:
+            self.handle.join()
 
-        try:
-            message = message.decode("utf-8")
-            result = runner.invoke(cli, shlex.split(message))
-            print("Message:", shlex.split(message))
-            print("Result:", result)
-            print("Exit code:", result.exit_code)
-            print("Output:", result.stdout)
-            if result.exit_code != 0:
-                raise Exception(result.stdout)
-            else:
-                socket.send(b"OK")
-        except Exception as e:
-            import traceback
+    def server(self):
+        context = zmq.Context()
+        socket = context.socket(zmq.REP)
+        runner = CliRunner()
 
-            traceback.print_exc()
-            socket.send(b"Error: " + str(e).encode("utf-8"))
+        with socket.bind("tcp://*:5555"):
+            while not self.stop_event.is_set():
+                # Check for messages - non-blocking
+                socket.poll(timeout=1000)
+                try:
+                    message = socket.recv(flags=zmq.NOBLOCK).decode("utf-8")
+                except zmq.ZMQError:
+                    continue
+
+                print("Received request: %s" % shlex.split(message))
+
+                try:
+                    result = runner.invoke(cli, shlex.split(message))
+                    if result.exit_code != 0:
+                        print("Result:", result)
+                        print("Exit code:", result.exit_code)
+                        print("Output:", result.stdout)
+                        raise Exception(result.stdout)
+                    else:
+                        socket.send(b"OK")
+                except Exception as e:
+                    traceback.print_exc()
+                    socket.send(b"Error: " + str(e).encode("utf-8"))
 
 
 if __name__ == "__main__":

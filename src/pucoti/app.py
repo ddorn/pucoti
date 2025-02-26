@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from pathlib import Path
-import threading
 from typing import Annotated
 import typer
 from click.core import ParameterSource
@@ -41,7 +40,7 @@ from .config import PucotiConfig, RunAtConfig, SocialConfig
 from .screens.base_screen import PucotiScreen
 from .screens.start_screen import StartScreen
 from .context import Context
-from .controller import server as controller_server, cli as controller_cli
+from .controller import Controller, cli as controller_cli
 
 
 class App(luckypot.App[PucotiScreen]):
@@ -70,7 +69,8 @@ class App(luckypot.App[PucotiScreen]):
         if config.window.initial_position not in self.window_positions:
             self.window_positions.insert(0, config.window.initial_position)
 
-        threading.Thread(target=controller_server).start()
+        self.controller_server = Controller()
+        self.controller_server.start()
 
     @property
     def INITIAL_STATE(self):
@@ -123,6 +123,10 @@ class App(luckypot.App[PucotiScreen]):
     def on_state_enter(self, state):
         super().on_state_enter(state)
         state.ctx = self.ctx
+
+    def on_exit(self):
+        self.controller_server.stop()
+        return super().on_exit()
 
 
 defaults = PucotiConfig()
