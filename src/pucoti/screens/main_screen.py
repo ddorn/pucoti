@@ -9,9 +9,10 @@ from luckypot import GFX
 from .. import time_utils
 from .. import pygame_utils
 from .. import constants
-from .base_screen import PucotiScreen, Context
+from .base_screen import PucotiScreen
 from . import help_screen, purpose_history_screen, social_screen
 from ..dfont import DFont
+from ..context import Context
 
 
 class MainScreen(PucotiScreen):
@@ -20,6 +21,7 @@ class MainScreen(PucotiScreen):
 
         self.hide_totals = False
 
+        self.last_purpose = ctx.purpose
         self.purpose_editor = TextEdit(
             initial_value=ctx.purpose_history[-1].text,
             color=ctx.config.color.purpose,
@@ -37,6 +39,11 @@ class MainScreen(PucotiScreen):
     def paused_logic(self):
         self.ctx.ring_if_needed()
         self.ctx.update_servers(force=False)
+
+        # Update purpose editor if purpose changed externally (e.g. from the controller).
+        if self.ctx.purpose != self.last_purpose:
+            self.last_purpose = self.ctx.purpose
+            self.purpose_editor.text = self.ctx.purpose
 
         return super().paused_logic()
 
