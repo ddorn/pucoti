@@ -75,6 +75,7 @@ export const usePucotiStore = defineStore('pucoti',
           intention,
           start: now,
         });
+        this.timers.onIntention.zeroAt = now;
       },
       addTime(ms: number) {
         this.timers.main.zeroAt += ms;
