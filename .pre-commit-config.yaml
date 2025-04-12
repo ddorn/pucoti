@@ -29,7 +29,7 @@ repos:
         - "--exit-non-zero-on-fix"
 
 
-ci:
-    autofix_prs: true
-    autoupdate_schedule: quarterly
-    autoupdate_commit_msg: "chore: pre-commit autoupdate"
+# ci:
+#     autofix_prs: true
+#     autoupdate_schedule: quarterly
+#     autoupdate_commit_msg: "chore: pre-commit autoupdate"
