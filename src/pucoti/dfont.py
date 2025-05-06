@@ -58,6 +58,7 @@ class DFont:
         color: tuple,
         monospaced_time: bool = False,
         align: int = pg.FONT_LEFT,
+        trim_to_bounding_box: bool = True,
     ):
         if not isinstance(size, int):
             if monospaced_time:
@@ -73,9 +74,10 @@ class DFont:
 
         if not monospaced_time:
             surf = font.render(text, True, color)
-            surf = surf.subsurface(
-                (0, -sizing.y_offset, surf.get_width(), min(sizing.height, surf.get_height()))
-            )
+            if trim_to_bounding_box:
+                surf = surf.subsurface(
+                    (0, -sizing.y_offset, surf.get_width(), min(sizing.height, surf.get_height()))
+                )
             return surf
 
         else:

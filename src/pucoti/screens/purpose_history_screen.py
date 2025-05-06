@@ -38,7 +38,7 @@ class PurposeHistoryScreen(PucotiScreen):
     def draw(self, gfx: GFX):
         super().draw(gfx)
 
-        rect = self.available_rect()
+        rect = self.layout()["main"]
         timestamps = [p.timestamp for p in self.ctx.purpose_history] + [time()]
         rows = [
             [

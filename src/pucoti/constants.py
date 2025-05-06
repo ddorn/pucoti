@@ -19,6 +19,7 @@ CONTROLER_PORT = 8421
 
 ASSETS = Path(__file__).parent / "assets"
 BELL = ASSETS / "bell.mp3"
+ICONS_FOLDER = ASSETS / "icons"
 BIG_FONT = ASSETS / "Bevan-Regular.ttf"
 FONT = BIG_FONT
 

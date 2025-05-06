@@ -19,7 +19,7 @@ class HelpScreen(PucotiScreen):
 
     def draw(self, gfx: GFX):
         super().draw(gfx)
-        rect = self.available_rect()
+        rect = self.layout()["main"]
 
         title = "PUCOTI Bindings"
         s = self.config.font.normal.table(

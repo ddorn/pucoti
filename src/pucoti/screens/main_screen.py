@@ -30,6 +30,7 @@ class MainScreen(PucotiScreen):
         )
 
         self.last_mouse_move = 0.0
+        self.buttons: dict[str, pygame.Rect] = {}
 
     @property
     def timer_end(self):
@@ -94,7 +95,8 @@ class MainScreen(PucotiScreen):
             return super().handle_event(event)
 
     def layout(self):
-        rect = self.available_rect()
+        base_layout = super().layout()
+        rect = base_layout["main"]
         height = rect.height
 
         if self.purpose_editor.editing:
@@ -129,7 +131,10 @@ class MainScreen(PucotiScreen):
                 total_time_rect, 1, 0.2, 1, horizontal=True
             )
 
-        return rects
+        return {
+            **base_layout,
+            **rects,
+        }
 
     def draw(self, gfx: help_screen.GFX):
         super().draw(gfx)

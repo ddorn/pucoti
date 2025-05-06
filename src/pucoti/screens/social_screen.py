@@ -14,11 +14,17 @@ class SocialScreen(PucotiScreen):
 
         self.vertical = False
 
-    def layout(self, n: int):
-        r = self.available_rect()
+    def layout(self):
+        layout = super().layout()
+        rect = layout["main"]
 
         # Split the rect into n sub-rect
-        return split_rect(r, *[1] * n, horizontal=not self.vertical, spacing=0.1)
+        n = len(self.ctx.friend_activity)
+        if n >= 2:
+            new = split_rect(rect, *[1] * n, horizontal=not self.vertical, spacing=0.1)
+            for i, r in enumerate(new):
+                layout[i] = r
+        return layout
 
     def layout_one(self, rect: pygame.Rect):
         user, time = split_rect(rect, 1, 2)
@@ -28,6 +34,7 @@ class SocialScreen(PucotiScreen):
     def draw(self, gfx: GFX):
         super().draw(gfx)
 
+        layout = self.layout()
         font = self.ctx.config.font.normal
 
         if len(self.ctx.friend_activity) < 2:
@@ -38,16 +45,15 @@ class SocialScreen(PucotiScreen):
                 text = "Use --social name@room to enable social features."
             else:
                 text = "You're not online."
-            rect = self.available_rect()
+            rect = layout["main"]
             gfx.blit(
                 font.render(text, rect.size, self.config.color.purpose, align=pygame.FONT_CENTER),
                 center=rect.center,
             )
             return
 
-        for friend, rect in zip(
-            self.ctx.friend_activity, self.layout(len(self.ctx.friend_activity))
-        ):
+        for i, friend in enumerate(self.ctx.friend_activity):
+            rect = layout[i]
             if friend.purpose:
                 text = f"{friend.username}: {friend.purpose}"
             else:
