@@ -71,9 +71,9 @@ class MainScreen(PucotiScreen):
                 if pygame_utils.shift_is_pressed(event):
                     new_duration *= 10
                 self.ctx.set_timer_to(new_duration)
-                self.initial_duration = new_duration
+                self.ctx.initial_duration = new_duration
             case pg.K_r:
-                self.ctx.set_timer_to(self.initial_duration)
+                self.ctx.set_timer_to(self.ctx.initial_duration)
             case pg.K_t:
                 self.hide_totals = not self.hide_totals
             case pg.K_h | pg.K_QUESTION:

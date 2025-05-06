@@ -6,7 +6,7 @@ GREEN=\033[34m
 # all: zip
 
 run:
-	@uv run python pucoti.py
+	@uv run pucoti
 
 # mkdist:
 # 	@mkdir -p dist

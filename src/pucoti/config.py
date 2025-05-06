@@ -64,6 +64,9 @@ class WindowConfig(Config):
     initial_position: tuple[int, int] = (-5, -5)
     initial_size: tuple[int, int] = (220, 80)
     borderless: bool = True
+    start_small: bool = False
+    resizable: bool = True
+    always_on_top: bool = True
 
 
 class SocialConfig(Config):
