@@ -55,9 +55,12 @@ class App(luckypot.App[PucotiScreen]):
         )
 
         if config.window.start_small:
-            self.INITIAL_SIZE = config.window.initial_size
+            self.INITIAL_SIZE = config.window.small_size
         else:
-            self.INITIAL_SIZE = (800, 600)
+            self.INITIAL_SIZE = config.window.big_size
+
+        assert config.window.small_size[0] <= config.window.big_size[0]
+        assert config.window.small_size[1] <= config.window.big_size[1]
 
         self.WINDOW_KWARGS["borderless"] = config.window.borderless
         self.WINDOW_KWARGS["always_on_top"] = config.window.always_on_top
@@ -140,12 +143,12 @@ class App(luckypot.App[PucotiScreen]):
     def toggle_big(self):
         """Make the window big if small and vice-versa."""
         w_width, w_height = self.window.size
-        small_width, small_height = self.config.window.initial_size
+        small_width, small_height = self.config.window.small_size
 
         if w_width <= small_width or w_height <= small_height:
-            self.window.size = (800, 600)
+            self.window.size = self.config.window.big_size
         else:
-            self.window.size = self.config.window.initial_size
+            self.window.size = self.config.window.small_size
 
             platforms.place_window(
                 self.window,

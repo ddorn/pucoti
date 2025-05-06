@@ -62,7 +62,8 @@ class ColorConfig(Config):
 
 class WindowConfig(Config):
     initial_position: tuple[int, int] = (-5, -5)
-    initial_size: tuple[int, int] = (220, 80)
+    small_size: tuple[int, int] = (220, 80)
+    big_size: tuple[int, int] = (800, 360)
     borderless: bool = True
     start_small: bool = False
     resizable: bool = True

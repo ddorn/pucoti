@@ -35,6 +35,7 @@ class PucotiScreen(luckypot.AppState):
             buttons = {
                 "home": "home",
                 "history": "list",
+                "social": "users",
                 "help": "help-circle",
                 "settings": "settings",
             }
@@ -70,6 +71,7 @@ class PucotiScreen(luckypot.AppState):
             "help": help_screen.HelpScreen,
             "history": purpose_history_screen.PurposeHistoryScreen,
             "settings": social_screen.SocialScreen,
+            "social": social_screen.SocialScreen,
         }
 
         target = states[state_name]
