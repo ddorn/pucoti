@@ -4,7 +4,7 @@ repos:
     rev: 25.1.0
     hooks:
     -   id: black-jupyter
-        name: format jupyter notebooks with black
+        name: format python code with black
         args:
         - --line-length
         - "100"
