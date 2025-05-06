@@ -1,0 +1,357 @@
+name: Build Pucoti
+
+on:
+  push:
+    branches: [packaging]
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            asset_name_suffix: windows.zip
+            pyinstaller_icon_path: packaging/windows/pucoti.ico # Placeholder: replace with actual .ico
+            path_separator: ";"
+            final_asset_glob: "Pucoti-*-windows.zip"
+          - os: ubuntu-latest
+            asset_name_suffix: linux-x86_64.AppImage
+            pyinstaller_icon_path: packaging/linux/pucoti.png # Make sure this exists
+            path_separator: ":"
+            final_asset_glob: "Pucoti-*-linux-x86_64.AppImage*" # Catches .AppImage and .zsync
+          - os: macos-latest
+            asset_name_suffix: macos.dmg
+            pyinstaller_icon_path: packaging/macos/pucoti.icns # Placeholder: replace with actual .icns
+            path_separator: ":"
+            final_asset_glob: "Pucoti-*-macos.dmg"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for git describe to get tags
+
+      - name: Set artifact version environment variable
+        id: set_version
+        shell: bash
+        run: |
+          VERSION_NAME=""
+          if [[ "${{ github.ref_type }}" == "tag" && -n "${{ github.ref_name }}" ]]; then
+            echo "Using tag: ${{ github.ref_name }}"
+            raw_tag_name="${{ github.ref_name }}"
+            VERSION_NAME="${raw_tag_name#v}"
+          else
+            # Use git describe for a more informative dev version
+            # Fallback to SHA if no tags are present
+            VERSION_NAME=$(git describe --tags --always --dirty="-dev" 2>/dev/null || echo "0.0.0-dev-$(echo ${{ github.sha }} | cut -c1-7)")
+            # Remove "v" prefix if git describe added it from a tag
+            VERSION_NAME="${VERSION_NAME#v}"
+            echo "Using dev version: ${VERSION_NAME}"
+          fi
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_ENV
+          echo "version_name_output=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "Derived version: ${VERSION_NAME}"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        shell: bash # Using bash is fine as uv commands are cross-platform
+        run: |
+          uv venv
+          # The following 'uv' commands will automatically use the .venv
+          # created in the current directory by 'uv venv' above.
+          # No explicit 'source' activation is needed for them.
+          echo "Installing wheel, pyinstaller, setuptools with uv pip..."
+          uv pip install --system wheel pyinstaller setuptools
+          echo "Syncing project dependencies with uv sync..."
+          uv sync --all-extras
+          echo "Dependencies installed."
+
+      - name: Prepare AppImage/DMG assets
+        shell: bash
+        run: |
+          mkdir -p build_assets
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            cat <<EOF > build_assets/pucoti.desktop
+          [Desktop Entry]
+          Name=Pucoti
+          Exec=Pucoti
+          Icon=pucoti
+          Type=Application
+          Categories=Utility;
+          EOF
+            # Ensure the icon path in matrix.pyinstaller_icon_path is correct
+            cp "${{ matrix.pyinstaller_icon_path }}" build_assets/pucoti.png
+            echo "Desktop file and icon prepared for Linux."
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            # For DMG background (optional)
+            # You might need to create a background image if you want one
+            # mkdir -p build_assets/dmg_background
+            # cp packaging/macos/dmg_background.png build_assets/dmg_background/background.png
+            echo "DMG assets prepared for macOS (if any)."
+          fi
+        continue-on-error: true # Allow to continue if icon/packaging dir doesn't exist for a specific OS yet
+
+      - name: Build with PyInstaller
+        shell: bash
+        run: |
+          echo "Building with PyInstaller for ${{ matrix.os }} using icon path: '${{ matrix.pyinstaller_icon_path }}'"
+
+          # Base arguments
+          PY_ARGS=("--noconfirm" "--name" "Pucoti" "--clean")
+
+          # Add-data argument
+          # Ensure the source path "src/pucoti/assets" exists and the destination "assets" is what your code expects
+          PY_ARGS+=("--add-data" "src/pucoti/assets${{ matrix.path_separator }}assets")
+
+          # Icon argument (conditional)
+          if [ -f "${{ matrix.pyinstaller_icon_path }}" ]; then
+            PY_ARGS+=("--icon" "${{ matrix.pyinstaller_icon_path }}")
+          else
+            echo "Warning: Icon not found at '${{ matrix.pyinstaller_icon_path }}'. Building without specific icon."
+            # PyInstaller will use a default icon if none is provided.
+          fi
+
+          # OS-specific arguments
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            PY_ARGS+=("--onefile" "--windowed")
+          elif [[ "${{ runner.os }}" == "Linux" ]]; then
+            # For AppImage, we build a one-dir distribution.
+            # The executable inside will be Pucoti/Pucoti if --name is Pucoti.
+            PY_ARGS+=("--onedir" "--windowed")
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            # --windowed on macOS creates a .app bundle.
+            # PyInstaller's default output with --name Pucoti and --windowed is dist/Pucoti.app
+            PY_ARGS+=("--windowed")
+          fi
+
+          # Main script
+          PY_ARGS+=("src/pucoti/app.py")
+
+          echo "Executing: uv run pyinstaller" "${PY_ARGS[@]}"
+          uv run pyinstaller "${PY_ARGS[@]}"
+
+          echo "PyInstaller build complete. Contents of dist/:"
+          ls -R dist
+          # On Linux, for --onedir, the main executable would be in dist/Pucoti/Pucoti
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            echo "Contents of dist/Pucoti/ (for Linux one-dir):"
+            ls -R dist/Pucoti || echo "dist/Pucoti not found or empty."
+          fi
+
+      # --- OS-specific Packaging ---
+
+      - name: Package Windows executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ArchiveName = "Pucoti-${{ env.VERSION_NAME }}-${{ matrix.asset_name_suffix }}"
+          $SourceFile = "dist/Pucoti.exe"
+          echo "Creating Windows archive: $ArchiveName from $SourceFile"
+          if (Test-Path $SourceFile) {
+            Compress-Archive -Path $SourceFile -DestinationPath $ArchiveName -Force
+            echo "Archive created: $ArchiveName"
+          } else {
+            echo "Error: PyInstaller output executable not found at $SourceFile"
+            exit 1
+          }
+          ls .
+
+      - name: Package macOS .app into DMG
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          APP_PATH="dist/Pucoti.app"
+          DMG_NAME="Pucoti-${{ env.VERSION_NAME }}-${{ matrix.asset_name_suffix }}"
+
+          echo "Checking for .app at ${APP_PATH}"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Error: Application bundle not found at $APP_PATH"
+            echo "Contents of dist/:"
+            ls -R dist
+            exit 1
+          fi
+
+          echo "Attempting to install create-dmg if not found..."
+          if ! command -v create-dmg &> /dev/null; then
+            echo "create-dmg not found, attempting to install via Homebrew..."
+            if ! command -v brew &> /dev/null; then
+              echo "Error: Homebrew not found. Cannot install create-dmg."
+              echo "Consider installing create-dmg via npm: npm install -g create-dmg"
+              exit 1
+            fi
+            brew install create-dmg
+          else
+            echo "create-dmg found."
+          fi
+
+          echo "Attempting to ad-hoc sign the application bundle: ${APP_PATH}"
+          codesign --force --deep --sign - "${APP_PATH}"
+
+          echo "Creating DMG: $DMG_NAME for $APP_PATH"
+          # Basic DMG creation. Add --background, --window-pos, --icon-size etc. if you have assets
+          create-dmg \
+            --volname "Pucoti Installer" \
+            --app-drop-link 600 185 \
+            "$DMG_NAME" \
+            "$APP_PATH"
+
+          if [ -f "$DMG_NAME" ]; then
+            echo "DMG created successfully: $DMG_NAME"
+          else
+            echo "Error: DMG creation failed."
+            ls -R .
+            exit 1
+          fi
+
+      - name: Prepare AppDir for AppImage (Linux only)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          APPDIR_NAME="Pucoti.AppDir"
+          # PyInstaller's one-dir output (e.g., dist/Pucoti)
+          PYINSTALLER_ONEDIR_OUTPUT="dist/Pucoti"
+          # This is the executable *inside* that output dir (e.g., Pucoti)
+          PUCOTI_EXEC_NAME_IN_DIR="Pucoti"
+
+          echo "Checking for PyInstaller output at $PYINSTALLER_ONEDIR_OUTPUT"
+          if [ ! -d "$PYINSTALLER_ONEDIR_OUTPUT" ]; then
+            echo "Error: PyInstaller one-dir output not found at $PYINSTALLER_ONEDIR_OUTPUT"
+            ls -R dist
+            exit 1
+          fi
+          if [ ! -f "$PYINSTALLER_ONEDIR_OUTPUT/$PUCOTI_EXEC_NAME_IN_DIR" ]; then
+            echo "Error: Executable $PUCOTI_EXEC_NAME_IN_DIR not found in $PYINSTALLER_ONEDIR_OUTPUT"
+            ls -R "$PYINSTALLER_ONEDIR_OUTPUT"
+            exit 1
+          fi
+
+          echo "Creating AppDir structure at $APPDIR_NAME"
+          mkdir -p "$APPDIR_NAME/usr/bin"
+          mkdir -p "$APPDIR_NAME/usr/share/applications"
+          mkdir -p "$APPDIR_NAME/usr/share/icons/hicolor/scalable/apps" # Or specific size like 64x64
+
+          echo "Copying PyInstaller output to AppDir/usr/bin/"
+          # We copy the executable itself, not the whole folder, to keep it clean
+          cp "$PYINSTALLER_ONEDIR_OUTPUT/$PUCOTI_EXEC_NAME_IN_DIR" "$APPDIR_NAME/usr/bin/$PUCOTI_EXEC_NAME_IN_DIR"
+          # Copy other necessary files from the one-dir output if any (e.g. .so files, data)
+          # This requires careful examination of PyInstaller's output.
+          # For a truly self-contained executable from one-dir, usually the main binary and its bundled libs are needed.
+          # A simpler approach might be to use PyInstaller's --onefile for the AppImage executable
+          # However, one-dir is often more robust for AppImage creation.
+          # Let's copy the whole one-dir content into a subdir within AppDir, and AppRun points to it.
+          # Alternative: copy necessary components from one-dir to AppDir/usr/lib, AppDir/usr/share etc.
+          # For now, let's put the *contents* of PyInstaller's output into the AppDir.
+          cp -r "$PYINSTALLER_ONEDIR_OUTPUT"/* "$APPDIR_NAME/"
+
+
+          echo "Copying .desktop file"
+          cp "build_assets/pucoti.desktop" "$APPDIR_NAME/pucoti.desktop"
+          # Symlink for menu integration
+          ln -s "../../../pucoti.desktop" "$APPDIR_NAME/usr/share/applications/pucoti.desktop"
+
+          echo "Copying icon file"
+          cp "build_assets/pucoti.png" "$APPDIR_NAME/pucoti.png"
+          # Symlink for menu integration
+          ln -s "../../../../pucoti.png" "$APPDIR_NAME/usr/share/icons/hicolor/scalable/apps/pucoti.png"
+          # cp "build_assets/pucoti.png" "$APPDIR_NAME/usr/share/icons/hicolor/64x64/apps/pucoti.png" # If using fixed size
+
+
+          echo "Creating AppRun script"
+          cat > "$APPDIR_NAME/AppRun" <<EOF
+          #!/bin/bash
+          APPDIR=\$(dirname "\$(readlink -f "\$0")")
+          # Ensure libraries from the AppDir are preferred
+          export LD_LIBRARY_PATH="\$APPDIR/usr/lib:\$LD_LIBRARY_PATH"
+          # Execute the main application binary
+          exec "\$APPDIR/${PUCOTI_EXEC_NAME_IN_DIR}" "\$@"
+          EOF
+          chmod +x "$APPDIR_NAME/AppRun"
+
+          echo "AppDir preparation complete. Contents of $APPDIR_NAME (top level):"
+          ls "$APPDIR_NAME"
+          echo "Contents of $APPDIR_NAME/usr/bin:"
+          ls "$APPDIR_NAME/usr/bin"
+
+      - name: Install FUSE for AppImage (Linux only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2
+
+      - name: Download and Build AppImage (Linux only)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          APPDIR_NAME="Pucoti.AppDir"
+          ARCH="x86_64" # Or detect dynamically if needed
+          APPIMAGE_FILENAME="Pucoti-${{ env.VERSION_NAME }}-${{ matrix.asset_name_suffix }}"
+
+          # Download appimagetool
+          APPIMAGETOOL_URL=$(wget -q "https://api.github.com/repos/AppImage/AppImageKit/releases/latest" -O - | grep "browser_download_url.*appimagetool-x86_64.AppImage" | head -n 1 | cut -d '"' -f 4)
+          if [ -z "$APPIMAGETOOL_URL" ]; then
+            echo "Failed to get appimagetool download URL from latest release. Using fallback."
+            APPIMAGETOOL_URL="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          fi
+          wget -q "$APPIMAGETOOL_URL" -O appimagetool.AppImage
+          chmod +x appimagetool.AppImage
+          ./appimagetool.AppImage --version
+
+          # Set environment variables for appimagetool (for updates, version embedding)
+          export VERSION="${{ env.VERSION_NAME }}"
+          # For GitHub releases: owner, repo, tag_prefix, filename_pattern
+          # Use 'gh-releases-zsync|OWNER|REPO|latest|Pucoti-*-linux-x86_64.AppImage.zsync'
+          export UPDATE_INFO="gh-releases-zsync|${{ github.repository_owner }}|${{ github.event.repository.name }}|latest|Pucoti-*-${ARCH}.AppImage.zsync"
+
+          echo "Building AppImage from $APPDIR_NAME with VERSION=$VERSION to $APPIMAGE_FILENAME"
+          # The -u option is for update information
+          ./appimagetool.AppImage --appimage-extract-and-run "$APPDIR_NAME" "$APPIMAGE_FILENAME" # Use --appimage-extract-and-run for modern AppImages
+          # Or the older way: ./appimagetool.AppImage "$APPDIR_NAME" "$APPIMAGE_FILENAME"
+
+          if [ -f "$APPIMAGE_FILENAME" ]; then
+            echo "AppImage created successfully: $APPIMAGE_FILENAME"
+            if [ -f "${APPIMAGE_FILENAME}.zsync" ]; then
+              echo "Zsync file also created: ${APPIMAGE_FILENAME}.zsync"
+            fi
+          else
+            echo "Error: appimagetool did not create $APPIMAGE_FILENAME!"
+            ls -la .
+            exit 1
+          fi
+
+      - name: List final files before upload
+        shell: bash
+        run: |
+          echo "Files matching glob '${{ matrix.final_asset_glob }}':"
+          ls -la ${{ matrix.final_asset_glob }} || echo "No files found for glob."
+          echo "Current directory contents:"
+          ls -lA
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pucoti-${{ env.VERSION_NAME }}-${{ matrix.os }}
+          path: ${{ matrix.final_asset_glob }}
+          if-no-files-found: error
+
+      - name: Create Release and Upload Assets
+        # This step only runs on tag pushes
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          # draft: true
+          files: |
+            ${{ matrix.final_asset_glob }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
