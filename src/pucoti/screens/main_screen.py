@@ -29,6 +29,8 @@ class MainScreen(PucotiScreen):
             submit_callback=ctx.set_purpose,
         )
 
+        self.last_mouse_move = 0.0
+
     @property
     def timer_end(self):
         return self.ctx.timer_end
@@ -55,36 +57,41 @@ class MainScreen(PucotiScreen):
         if self.purpose_editor.handle_event(event):
             return True
 
-        if event.type != pg.KEYDOWN:
-            return super().handle_event(event)
+        if event.type == pg.MOUSEMOTION:
+            self.last_mouse_move = time()
 
-        # We only handle keydown events from here on.
-        match event.key:
-            case pg.K_j:
-                delta = -60 * 5 if pygame_utils.shift_is_pressed(event) else -60
-                self.ctx.shift_timer(delta)
-            case pg.K_k:
-                delta = 60 * 5 if pygame_utils.shift_is_pressed(event) else 60
-                self.ctx.shift_timer(delta)
-            case number if number in constants.NUMBER_KEYS:
-                new_duration = 60 * pygame_utils.get_number_from_key(number)
-                if pygame_utils.shift_is_pressed(event):
-                    new_duration *= 10
-                self.ctx.set_timer_to(new_duration)
-                self.ctx.initial_duration = new_duration
-            case pg.K_r:
-                self.ctx.set_timer_to(self.ctx.initial_duration)
-            case pg.K_t:
-                self.hide_totals = not self.hide_totals
-            case pg.K_h | pg.K_QUESTION:
-                self.push_state(help_screen.HelpScreen(self.ctx))
-            case pg.K_l:
-                self.push_state(purpose_history_screen.PurposeHistoryScreen(self.ctx))
-            case pg.K_s:
-                self.push_state(social_screen.SocialScreen(self.ctx))
-            case _:
-                return super().handle_event(event)
-        return True
+        elif event.type == pg.KEYDOWN:
+
+            # We only handle keydown events from here on.
+            match event.key:
+                case pg.K_j:
+                    delta = -60 * 5 if pygame_utils.shift_is_pressed(event) else -60
+                    self.ctx.shift_timer(delta)
+                case pg.K_k:
+                    delta = 60 * 5 if pygame_utils.shift_is_pressed(event) else 60
+                    self.ctx.shift_timer(delta)
+                case number if number in constants.NUMBER_KEYS:
+                    new_duration = 60 * pygame_utils.get_number_from_key(number)
+                    if pygame_utils.shift_is_pressed(event):
+                        new_duration *= 10
+                    self.ctx.set_timer_to(new_duration)
+                    self.ctx.initial_duration = new_duration
+                case pg.K_r:
+                    self.ctx.set_timer_to(self.ctx.initial_duration)
+                case pg.K_t:
+                    self.hide_totals = not self.hide_totals
+                case pg.K_h | pg.K_QUESTION:
+                    self.push_state(help_screen.HelpScreen(self.ctx))
+                case pg.K_l:
+                    self.push_state(purpose_history_screen.PurposeHistoryScreen(self.ctx))
+                case pg.K_s:
+                    self.push_state(social_screen.SocialScreen(self.ctx))
+                case _:
+                    return super().handle_event(event)
+            return True
+
+        else:
+            return super().handle_event(event)
 
     def layout(self):
         rect = self.available_rect()
@@ -160,7 +167,7 @@ class MainScreen(PucotiScreen):
         """Show the timer in the given rect and anchor."""
 
         mouse_pos = pygame.mouse.get_pos()
-        if rect.collidepoint(mouse_pos) and self.ctx.app.window_has_focus:
+        if rect.collidepoint(mouse_pos) and time() - self.last_mouse_move < 1:
             text = label
         else:
             text = time_utils.fmt_duration(value)
