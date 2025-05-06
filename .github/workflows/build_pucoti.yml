@@ -15,10 +15,10 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
-            asset_name_suffix: windows.zip
+            asset_name_suffix: windows.exe # MODIFIED: from windows.zip
             pyinstaller_icon_path: packaging/windows/pucoti.ico # Placeholder: replace with actual .ico
             path_separator: ";"
-            final_asset_glob: "Pucoti-*-windows.zip"
+            final_asset_glob: "Pucoti-*-windows.exe" # MODIFIED: from .zip glob
           - os: ubuntu-latest
             asset_name_suffix: linux-x86_64.AppImage
             pyinstaller_icon_path: packaging/linux/pucoti.png # Make sure this exists
@@ -151,21 +151,27 @@ jobs:
 
       # --- OS-specific Packaging ---
 
-      - name: Package Windows executable
+      - name: Prepare Windows Executable Asset # MODIFIED: Step name and script content
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $ArchiveName = "Pucoti-${{ env.VERSION_NAME }}-${{ matrix.asset_name_suffix }}"
-          $SourceFile = "dist/Pucoti.exe"
-          echo "Creating Windows archive: $ArchiveName from $SourceFile"
-          if (Test-Path $SourceFile) {
-            Compress-Archive -Path $SourceFile -DestinationPath $ArchiveName -Force
-            echo "Archive created: $ArchiveName"
-          } else {
+          $FinalAssetName = "Pucoti-${{ env.VERSION_NAME }}-${{ matrix.asset_name_suffix }}" # e.g., Pucoti-1.0.0-windows.exe
+          $SourceFile = "dist/Pucoti.exe" # PyInstaller output
+
+          echo "Preparing Windows asset: $FinalAssetName from $SourceFile"
+
+          if (-not (Test-Path $SourceFile)) {
             echo "Error: PyInstaller output executable not found at $SourceFile"
+            echo "Contents of dist/:"
+            Get-ChildItem -Path "dist" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length, LastWriteTime
             exit 1
           }
-          ls .
+
+          Copy-Item -Path $SourceFile -Destination $FinalAssetName -Force
+          echo "Windows executable asset prepared as: $FinalAssetName"
+
+          echo "Listing current directory contents to verify the asset:"
+          Get-ChildItem -Path "." | Where-Object Name -eq $FinalAssetName
 
       - name: Package macOS .app into DMG
         if: runner.os == 'macOS'
@@ -241,17 +247,8 @@ jobs:
           mkdir -p "$APPDIR_NAME/usr/share/applications"
           mkdir -p "$APPDIR_NAME/usr/share/icons/hicolor/scalable/apps" # Or specific size like 64x64
 
-          echo "Copying PyInstaller output to AppDir/usr/bin/"
-          # We copy the executable itself, not the whole folder, to keep it clean
-          cp "$PYINSTALLER_ONEDIR_OUTPUT/$PUCOTI_EXEC_NAME_IN_DIR" "$APPDIR_NAME/usr/bin/$PUCOTI_EXEC_NAME_IN_DIR"
-          # Copy other necessary files from the one-dir output if any (e.g. .so files, data)
-          # This requires careful examination of PyInstaller's output.
-          # For a truly self-contained executable from one-dir, usually the main binary and its bundled libs are needed.
-          # A simpler approach might be to use PyInstaller's --onefile for the AppImage executable
-          # However, one-dir is often more robust for AppImage creation.
-          # Let's copy the whole one-dir content into a subdir within AppDir, and AppRun points to it.
-          # Alternative: copy necessary components from one-dir to AppDir/usr/lib, AppDir/usr/share etc.
-          # For now, let's put the *contents* of PyInstaller's output into the AppDir.
+          echo "Copying PyInstaller output to AppDir..." # Modified message slightly
+          # Copy the *contents* of PyInstaller's one-dir output into the AppDir.
           cp -r "$PYINSTALLER_ONEDIR_OUTPUT"/* "$APPDIR_NAME/"
 
 
@@ -272,15 +269,15 @@ jobs:
           #!/bin/bash
           APPDIR=\$(dirname "\$(readlink -f "\$0")")
           # Ensure libraries from the AppDir are preferred
-          export LD_LIBRARY_PATH="\$APPDIR/usr/lib:\$LD_LIBRARY_PATH"
-          # Execute the main application binary
+          export LD_LIBRARY_PATH="\$APPDIR/usr/lib:\$APPDIR:\$LD_LIBRARY_PATH" # Added APPDIR to LD_LIBRARY_PATH for libs in root of AppDir
+          # Execute the main application binary (which is now in the root of AppDir)
           exec "\$APPDIR/${PUCOTI_EXEC_NAME_IN_DIR}" "\$@"
           EOF
           chmod +x "$APPDIR_NAME/AppRun"
 
           echo "AppDir preparation complete. Contents of $APPDIR_NAME (top level):"
           ls "$APPDIR_NAME"
-          echo "Contents of $APPDIR_NAME/usr/bin:"
+          echo "Contents of $APPDIR_NAME/usr/bin (should be empty if main exec is in AppDir root):"
           ls "$APPDIR_NAME/usr/bin"
 
       - name: Install FUSE for AppImage (Linux only)
@@ -314,9 +311,9 @@ jobs:
           export UPDATE_INFO="gh-releases-zsync|${{ github.repository_owner }}|${{ github.event.repository.name }}|latest|Pucoti-*-${ARCH}.AppImage.zsync"
 
           echo "Building AppImage from $APPDIR_NAME with VERSION=$VERSION to $APPIMAGE_FILENAME"
-          # The -u option is for update information
-          ./appimagetool.AppImage --appimage-extract-and-run "$APPDIR_NAME" "$APPIMAGE_FILENAME" # Use --appimage-extract-and-run for modern AppImages
-          # Or the older way: ./appimagetool.AppImage "$APPDIR_NAME" "$APPIMAGE_FILENAME"
+          # The -u option is for update information. Use --appimage-extract-and-run if appimagetool supports it and it's preferred
+          # It's safer to use the standard call unless --appimage-extract-and-run is specifically needed and tested
+          ./appimagetool.AppImage -u "$UPDATE_INFO" "$APPDIR_NAME" "$APPIMAGE_FILENAME"
 
           if [ -f "$APPIMAGE_FILENAME" ]; then
             echo "AppImage created successfully: $APPIMAGE_FILENAME"
