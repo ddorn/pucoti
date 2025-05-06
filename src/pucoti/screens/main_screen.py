@@ -71,9 +71,9 @@ class MainScreen(PucotiScreen):
                 if pygame_utils.shift_is_pressed(event):
                     new_duration *= 10
                 self.ctx.set_timer_to(new_duration)
-                self.initial_duration = new_duration
+                self.ctx.initial_duration = new_duration
             case pg.K_r:
-                self.ctx.set_timer_to(self.initial_duration)
+                self.ctx.set_timer_to(self.ctx.initial_duration)
             case pg.K_t:
                 self.hide_totals = not self.hide_totals
             case pg.K_h | pg.K_QUESTION:
@@ -128,38 +128,52 @@ class MainScreen(PucotiScreen):
         super().draw(gfx)
         layout = self.layout()
 
-        # Render time.
-        remaining = self.ctx.remaining_time  # locked
         if time_rect := layout.get("time"):
+            remaining = self.ctx.remaining_time  # locked
             color = self.config.color.timer_up if remaining < 0 else self.config.color.timer
-            t = self.config.font.big.render(
-                time_utils.fmt_duration(abs(remaining)),
-                time_rect.size,
-                color,
-                monospaced_time=True,
-            )
-            gfx.blit(t, center=time_rect.center)
+            self.show_timer(gfx, abs(remaining), color, time_rect, "center", "Main timer")
 
         if total_time_rect := layout.get("total_time"):
-            t = self.config.font.normal.render(
-                time_utils.fmt_duration(time() - self.ctx.start),
-                total_time_rect.size,
+            self.show_timer(
+                gfx,
+                time() - self.ctx.start,
                 self.config.color.total_time,
-                monospaced_time=True,
+                total_time_rect,
+                "midleft",
+                "Time on pucoti",
             )
-            gfx.blit(t, midleft=total_time_rect.midleft)
 
         if purpose_time_rect := layout.get("purpose_time"):
-            t = self.config.font.normal.render(
-                time_utils.fmt_duration(time() - self.ctx.purpose_start_time),
-                purpose_time_rect.size,
+            self.show_timer(
+                gfx,
+                time() - self.ctx.purpose_start_time,
                 self.config.color.purpose,
-                monospaced_time=True,
+                purpose_time_rect,
+                "midright",
+                "Time on purpose",
             )
-            gfx.blit(t, midright=purpose_time_rect.midright)
 
         if purpose_rect := layout.get("purpose"):
             self.purpose_editor.draw(gfx, purpose_rect)
+
+    def show_timer(self, gfx, value: float, color, rect, anchor: str, label: str):
+        """Show the timer in the given rect and anchor."""
+
+        mouse_pos = pygame.mouse.get_pos()
+        if rect.collidepoint(mouse_pos) and self.ctx.app.window_has_focus:
+            text = label
+        else:
+            text = time_utils.fmt_duration(value)
+
+        t = self.config.font.big.render(
+            text,
+            rect.size,
+            color,
+            monospaced_time=True,
+        )
+
+        anchor_data = {anchor: getattr(rect, anchor)}
+        return gfx.blit(t, **anchor_data)
 
 
 class TextEdit:

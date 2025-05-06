@@ -3,6 +3,7 @@ import threading
 from dataclasses import dataclass
 from pathlib import Path
 from time import time
+from typing import TYPE_CHECKING
 
 import luckypot
 import pygame
@@ -14,11 +15,14 @@ from .config import PucotiConfig
 from .purpose import Purpose
 from .server_comunication import UpdateRoomRequest, UserData, send_update
 
+if TYPE_CHECKING:
+    from .app import App
+
 
 @dataclass
 class Context:
     config: PucotiConfig
-    app: luckypot.App
+    app: "App"
     history_file: Path
     purpose_history: list[Purpose]
     friend_activity: list[UserData]

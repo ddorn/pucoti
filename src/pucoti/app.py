@@ -53,14 +53,21 @@ class App(luckypot.App[PucotiScreen]):
             config=config,
             app=self,
         )
-        self.INITIAL_SIZE = config.window.initial_size
+
+        if config.window.start_small:
+            self.INITIAL_SIZE = config.window.initial_size
+        else:
+            self.INITIAL_SIZE = (800, 600)
+
         self.WINDOW_KWARGS["borderless"] = config.window.borderless
-        self.WINDOW_KWARGS["resizable"] = True
-        self.WINDOW_KWARGS["always_on_top"] = True
+        self.WINDOW_KWARGS["always_on_top"] = config.window.always_on_top
+        self.WINDOW_KWARGS["resizable"] = config.window.resizable
 
         super().__init__()
         pygame.key.set_repeat(300, 20)
-        platforms.place_window(self.window, *config.window.initial_position)
+
+        if config.window.start_small:
+            platforms.place_window(self.window, *config.window.initial_position)
 
         self.window_has_focus = True
 
@@ -92,6 +99,8 @@ class App(luckypot.App[PucotiScreen]):
                     self.ctx.app.window,
                     *self.current_window_position,
                 )
+            elif event.key == pg.K_f:
+                self.toggle_big()
             elif event.key == pg.K_MINUS:
                 pygame_utils.scale_window(
                     self.window, 1 / constants.WINDOW_SCALE, constants.MIN_WINDOW_SIZE
@@ -127,6 +136,21 @@ class App(luckypot.App[PucotiScreen]):
     def on_exit(self):
         self.controller_server.stop()
         return super().on_exit()
+
+    def toggle_big(self):
+        """Make the window big if small and vice-versa."""
+        w_width, w_height = self.window.size
+        small_width, small_height = self.config.window.initial_size
+
+        if w_width <= small_width or w_height <= small_height:
+            self.window.size = (800, 600)
+        else:
+            self.window.size = self.config.window.initial_size
+
+            platforms.place_window(
+                self.window,
+                *self.current_window_position,
+            )
 
 
 defaults = PucotiConfig()
