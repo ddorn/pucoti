@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+    --font-sans: "Instrument Sans", sans-serif;
+    --font-display: "Bevan", sans-serif;
+    --color-butter: #ffe091;
+    --color-maroon: #3b3131;
+    --color-acid: rgb(183, 255, 183);
+}
