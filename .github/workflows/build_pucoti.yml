@@ -15,18 +15,18 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
-            asset_name_suffix: windows.exe # MODIFIED: from windows.zip
-            pyinstaller_icon_path: packaging/windows/pucoti.ico # Placeholder: replace with actual .ico
+            asset_name_suffix: windows.exe
+            pyinstaller_icon_path: packaging/windows/pucoti.ico
             path_separator: ";"
-            final_asset_glob: "Pucoti-*-windows.exe" # MODIFIED: from .zip glob
+            final_asset_glob: "Pucoti-*-windows.exe"
           - os: ubuntu-latest
             asset_name_suffix: linux-x86_64.AppImage
-            pyinstaller_icon_path: packaging/linux/pucoti.png # Make sure this exists
+            pyinstaller_icon_path: packaging/linux/pucoti.png
             path_separator: ":"
-            final_asset_glob: "Pucoti-*-linux-x86_64.AppImage*" # Catches .AppImage and .zsync
+            final_asset_glob: "Pucoti-*-linux-x86_64.AppImage*"
           - os: macos-latest
             asset_name_suffix: macos.dmg
-            pyinstaller_icon_path: packaging/macos/pucoti.icns # Placeholder: replace with actual .icns
+            pyinstaller_icon_path: packaging/macos/pucoti.icns
             path_separator: ":"
             final_asset_glob: "Pucoti-*-macos.dmg"
 
@@ -65,7 +65,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        shell: bash # Using bash is fine as uv commands are cross-platform
+        shell: bash
         run: |
           uv venv
           # The following 'uv' commands will automatically use the .venv
@@ -106,52 +106,129 @@ jobs:
         shell: bash
         run: |
           echo "Building with PyInstaller for ${{ matrix.os }} using icon path: '${{ matrix.pyinstaller_icon_path }}'"
-
-          # Base arguments
           PY_ARGS=("--noconfirm" "--name" "Pucoti" "--clean")
-
-          # Add-data argument
-          # Ensure the source path "src/pucoti/assets" exists and the destination "assets" is what your code expects
           PY_ARGS+=("--add-data" "src/pucoti/assets${{ matrix.path_separator }}assets")
 
-          # Icon argument (conditional)
           if [ -f "${{ matrix.pyinstaller_icon_path }}" ]; then
             PY_ARGS+=("--icon" "${{ matrix.pyinstaller_icon_path }}")
           else
             echo "Warning: Icon not found at '${{ matrix.pyinstaller_icon_path }}'. Building without specific icon."
-            # PyInstaller will use a default icon if none is provided.
           fi
 
-          # OS-specific arguments
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             PY_ARGS+=("--onefile" "--windowed")
           elif [[ "${{ runner.os }}" == "Linux" ]]; then
-            # For AppImage, we build a one-dir distribution.
-            # The executable inside will be Pucoti/Pucoti if --name is Pucoti.
             PY_ARGS+=("--onedir" "--windowed")
           elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            # --windowed on macOS creates a .app bundle.
-            # PyInstaller's default output with --name Pucoti and --windowed is dist/Pucoti.app
             PY_ARGS+=("--windowed")
+            # ATTEMPT TO BUILD UNIVERSAL2 - Requires PyInstaller 5.1+
+            # Ensure the Python from setup-python and uv supports this well.
+            # If this causes issues, try targeting a specific arch like 'x86_64' first.
+            PY_ARGS+=("--target-arch" "universal2")
+            # You can also add --osx-bundle-identifier your.bundle.id here if needed
+            # PY_ARGS+=("--osx-bundle-identifier" "com.example.pucoti")
           fi
 
-          # Main script
           PY_ARGS+=("src/pucoti/app.py")
-
           echo "Executing: uv run pyinstaller" "${PY_ARGS[@]}"
           uv run pyinstaller "${PY_ARGS[@]}"
-
           echo "PyInstaller build complete. Contents of dist/:"
           ls -R dist
-          # On Linux, for --onedir, the main executable would be in dist/Pucoti/Pucoti
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            echo "Contents of dist/Pucoti/ (for Linux one-dir):"
-            ls -R dist/Pucoti || echo "dist/Pucoti not found or empty."
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo "Architecture of resulting macOS executable:"
+            lipo -info "dist/Pucoti.app/Contents/MacOS/Pucoti" || echo "lipo check failed"
+            echo "Info.plist for macOS app:"
+            cat "dist/Pucoti.app/Contents/Info.plist" || echo "Info.plist not found or unreadable"
+          fi
+          # ... (rest of the PyInstaller build step)
+
+      - name: Package macOS .app into DMG
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          APP_PATH="dist/Pucoti.app"
+          DMG_NAME="Pucoti-${{ env.VERSION_NAME }}-${{ matrix.asset_name_suffix }}"
+
+          echo "Checking for .app at ${APP_PATH}"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Error: Application bundle not found at $APP_PATH"
+            ls -R dist
+            exit 1
+          fi
+
+          # Log architecture again after all PyInstaller steps
+          echo "Final architecture check of executable in .app:"
+          lipo -info "${APP_PATH}/Contents/MacOS/Pucoti" || echo "lipo check failed for final app"
+
+          # Install create-dmg
+          echo "Attempting to install create-dmg if not found..."
+          if ! command -v create-dmg &> /dev/null; then
+            echo "create-dmg not found, attempting to install via Homebrew..."
+            if ! command -v brew &> /dev/null; then
+                echo "Error: Homebrew not found. Cannot install create-dmg."
+                # Alternative: npm install -g create-dmg (less common on CI runners unless Node is set up)
+                # Or use a setup action for create-dmg
+                exit 1
+            fi
+            brew install create-dmg
+          else
+            echo "create-dmg found."
+          fi
+
+          echo "Attempting to ad-hoc sign the application bundle: ${APP_PATH}"
+          # Ensure the executable itself is +x, PyInstaller usually handles this.
+          chmod +x "${APP_PATH}/Contents/MacOS/Pucoti"
+          codesign --force --deep --sign - "${APP_PATH}"
+          # Verify signature (optional but good)
+          codesign --verify --verbose=4 "${APP_PATH}" || echo "Codesign verification failed"
+          # Gatekeeper assessment
+          spctl --assess --type execute -v "${APP_PATH}" || echo "spctl assessment failed for ad-hoc signed app"
+
+
+          echo "Creating DMG: $DMG_NAME for $APP_PATH"
+          create-dmg \
+            --volname "Pucoti Installer" \
+            --app-drop-link 600 185 \
+            "$DMG_NAME" \
+            "$APP_PATH"
+
+          if [ -f "$DMG_NAME" ]; then
+            echo "DMG created successfully: $DMG_NAME"
+          else
+            echo "Error: DMG creation failed."
+            ls -R .
+            exit 1
+          fi
+
+      # Add the inspection step here if you didn't integrate parts of it earlier
+      - name: Inspect and Verify macOS .app Bundle (Post DMG Creation)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          APP_PATH="dist/Pucoti.app" # Path to the .app BEFORE it's put in the DMG
+          EXECUTABLE_PATH="${APP_PATH}/Contents/MacOS/Pucoti"
+          DMG_NAME="Pucoti-${{ env.VERSION_NAME }}-${{ matrix.asset_name_suffix }}"
+
+          echo "--- Verifying .app bundle structure (Source for DMG) ---"
+          # ... (similar checks as proposed in Q1 answer) ...
+          # This is redundant if you checked thoroughly before DMG creation,
+          # but can be useful as a final sanity check on the source material.
+
+          echo "--- Basic DMG check ---"
+          if [ -f "$DMG_NAME" ]; then
+            echo "DMG file $DMG_NAME exists. Size: $(ls -lh "$DMG_NAME" | awk '{print $5}')"
+            # You could try to mount it and inspect, but that adds complexity
+            # hdiutil attach "$DMG_NAME"
+            # ls -R "/Volumes/Pucoti Installer" # Adjust volume name based on --volname
+            # hdiutil detach "/Volumes/Pucoti Installer"
+          else
+            echo "Error: Final DMG file $DMG_NAME not found!"
+            exit 1
           fi
 
       # --- OS-specific Packaging ---
 
-      - name: Prepare Windows Executable Asset # MODIFIED: Step name and script content
+      - name: Prepare Windows Executable Asset
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -172,53 +249,6 @@ jobs:
 
           echo "Listing current directory contents to verify the asset:"
           Get-ChildItem -Path "." | Where-Object Name -eq $FinalAssetName
-
-      - name: Package macOS .app into DMG
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          APP_PATH="dist/Pucoti.app"
-          DMG_NAME="Pucoti-${{ env.VERSION_NAME }}-${{ matrix.asset_name_suffix }}"
-
-          echo "Checking for .app at ${APP_PATH}"
-          if [ ! -d "$APP_PATH" ]; then
-            echo "Error: Application bundle not found at $APP_PATH"
-            echo "Contents of dist/:"
-            ls -R dist
-            exit 1
-          fi
-
-          echo "Attempting to install create-dmg if not found..."
-          if ! command -v create-dmg &> /dev/null; then
-            echo "create-dmg not found, attempting to install via Homebrew..."
-            if ! command -v brew &> /dev/null; then
-              echo "Error: Homebrew not found. Cannot install create-dmg."
-              echo "Consider installing create-dmg via npm: npm install -g create-dmg"
-              exit 1
-            fi
-            brew install create-dmg
-          else
-            echo "create-dmg found."
-          fi
-
-          echo "Attempting to ad-hoc sign the application bundle: ${APP_PATH}"
-          codesign --force --deep --sign - "${APP_PATH}"
-
-          echo "Creating DMG: $DMG_NAME for $APP_PATH"
-          # Basic DMG creation. Add --background, --window-pos, --icon-size etc. if you have assets
-          create-dmg \
-            --volname "Pucoti Installer" \
-            --app-drop-link 600 185 \
-            "$DMG_NAME" \
-            "$APP_PATH"
-
-          if [ -f "$DMG_NAME" ]; then
-            echo "DMG created successfully: $DMG_NAME"
-          else
-            echo "Error: DMG creation failed."
-            ls -R .
-            exit 1
-          fi
 
       - name: Prepare AppDir for AppImage (Linux only)
         if: runner.os == 'Linux'
@@ -247,7 +277,7 @@ jobs:
           mkdir -p "$APPDIR_NAME/usr/share/applications"
           mkdir -p "$APPDIR_NAME/usr/share/icons/hicolor/scalable/apps" # Or specific size like 64x64
 
-          echo "Copying PyInstaller output to AppDir..." # Modified message slightly
+          echo "Copying PyInstaller output to AppDir..."
           # Copy the *contents* of PyInstaller's one-dir output into the AppDir.
           cp -r "$PYINSTALLER_ONEDIR_OUTPUT"/* "$APPDIR_NAME/"
 
