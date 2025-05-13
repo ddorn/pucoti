@@ -2,6 +2,8 @@ from time import time
 from luckypot import GFX
 import pygame
 
+from pucoti.widgets.sentence_edit import SentenceEdit, Field
+
 from .base_screen import PucotiScreen
 from ..pygame_utils import split_rect
 from ..time_utils import fmt_duration
@@ -13,6 +15,27 @@ class SocialScreen(PucotiScreen):
         super().__init__(ctx)
 
         self.vertical = False
+        self.login_edit = SentenceEdit(
+            [
+                "Join ",
+                Field("room", self.ctx.config.social.room, self.config.color.purpose),
+                " as ",
+                Field("name", self.ctx.config.social.username, self.config.color.purpose),
+                ".",
+            ],
+            self.config.color.timer,
+            font=self.ctx.config.font.normal,
+            help_text="CTRL+ENTER to join",
+            submit_callback=self.join_callback,
+        )
+
+    def join_callback(self, data: dict[str, str]):
+        self.ctx.config.social.username = data["name"]
+        self.ctx.config.social.room = data["room"]
+        self.ctx.config.social.enabled = True
+
+    def draw_login(self, gfx: GFX, rect: pygame.Rect):
+        self.login_edit.draw(gfx, rect)
 
     def layout(self):
         layout = super().layout()
@@ -37,12 +60,18 @@ class SocialScreen(PucotiScreen):
         layout = self.layout()
         font = self.ctx.config.font.normal
 
+        if not self.ctx.config.social.enabled:
+            self.draw_login(gfx, layout["main"])
+            return
+
+        if len(self.ctx.friend_activity) == 1:
+            room = self.ctx.config.social.room
+            text = f"Tell your friends to join {room}."
+
         if len(self.ctx.friend_activity) < 2:
             if len(self.ctx.friend_activity) == 1:
                 room = self.ctx.config.social.room
                 text = f"Tell your friends to use\n--social <name>@{room}\n;)"
-            elif not self.ctx.config.social.enabled:
-                text = "Use --social name@room to enable social features."
             else:
                 text = "You're not online."
             rect = layout["main"]
@@ -98,11 +127,14 @@ class SocialScreen(PucotiScreen):
         if super().handle_event(event):
             return True
 
+        if self.login_edit.handle_event(event):
+            return True
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_v:
                 self.vertical = not self.vertical
-            else:
-                self.pop_state()
-            return True
+                # else:
+                # self.pop_state()
+                return True
 
         return False

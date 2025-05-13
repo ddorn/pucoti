@@ -1,18 +1,15 @@
-import re
 from time import time
-from typing import Callable
 
 import pygame
 import pygame.locals as pg
-from luckypot import GFX
 
 from .. import time_utils
 from .. import pygame_utils
 from .. import constants
 from .base_screen import PucotiScreen
 from . import help_screen, purpose_history_screen, social_screen
-from ..dfont import DFont
 from ..context import Context
+from ..widgets.text_edit import TextEdit
 
 
 class MainScreen(PucotiScreen):
@@ -27,6 +24,7 @@ class MainScreen(PucotiScreen):
             color=ctx.config.color.purpose,
             font=ctx.config.font.normal,
             submit_callback=ctx.set_purpose,
+            autofocus=True,
         )
 
         self.last_mouse_move = 0.0
@@ -186,56 +184,3 @@ class MainScreen(PucotiScreen):
 
         anchor_data = {anchor: getattr(rect, anchor)}
         return gfx.blit(t, **anchor_data)
-
-
-class TextEdit:
-    def __init__(
-        self,
-        initial_value: str,
-        color,
-        font: DFont,
-        submit_callback: Callable[[str], None] = lambda text: None,
-    ) -> None:
-        self.color = color
-        self.font = font
-        self.submit_callback = submit_callback
-        self.text = initial_value
-        self.editing = False
-
-    def handle_event(self, event) -> bool:
-        if not self.editing:
-            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
-                self.editing = True
-                return True
-            return False
-
-        if event.type == pg.TEXTINPUT:
-            self.text += event.text
-            return True
-        elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_BACKSPACE:
-                if event.mod & pg.KMOD_CTRL:
-                    self.text = re.sub(r"\S*\s*$", "", self.text)
-                else:
-                    self.text = self.text[:-1]
-                return True
-            elif event.key in (pg.K_RETURN, pg.K_KP_ENTER, pg.K_ESCAPE):
-                self.submit_callback(self.text)
-                self.editing = False
-                return True
-            elif event.unicode:
-                # There are duplicate events for TEXTINPUT and KEYDOWN, so we
-                # need to filter them out.
-                return True
-
-        return False
-
-    def draw(self, gfx: GFX, rect: pygame.Rect):
-        t = self.font.render(self.text, rect.size, self.color)
-        r = gfx.blit(t, center=rect.center)
-        if self.editing and (time() % 1) < 0.7:
-            if r.height == 0:
-                r.height = rect.height
-            if r.right >= rect.right:
-                r.right = rect.right - 3
-            pygame.draw.line(gfx.surf, self.color, r.topright, r.bottomright, 2)

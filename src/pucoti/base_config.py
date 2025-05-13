@@ -8,7 +8,10 @@ import yaml
 class Config(BaseModel):
     _filepath: Path | None = None
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(
+        # frozen=True,
+        extra="forbid",
+    )
 
     def merge_partial(self, values: dict[str, dict | Any]) -> Self:
         updates = self.__class__.model_validate(values)

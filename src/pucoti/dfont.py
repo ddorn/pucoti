@@ -109,6 +109,43 @@ class DFont:
 
             return surf
 
+    def render_parts(
+        self,
+        text: list[tuple[str, pygame.Color]],
+        size: int | tuple[int, int],
+        align: int = pg.FONT_LEFT,
+    ) -> tuple[pygame.Surface, list[pygame.Rect], int]:
+        """Render a list of text parts with different colors.
+
+        Args:
+            text: A list of tuples (text, color).
+            size: The font size.
+            align: The alignment of the text.
+
+        Returns:
+            A tuple (surface, rects, font_size) where surface is the rendered text and rects is a list of rects for each part.
+        """
+        if "\n" in "".join(t[0] for t in text):
+            raise ValueError("Newlines are not supported in render_parts.")
+
+        if not isinstance(size, int):
+            size = self.auto_size("".join(t[0] for t in text), size)
+
+        font = self.get_font(size, align)
+        sizing = self.tight_size_with_newlines("".join(t[0] for t in text), size)
+        surf = pygame.Surface((sizing.width, sizing.height), pg.SRCALPHA)
+        rects = []
+
+        x = 0
+        for part, color in text:
+            part_surf = font.render(part, True, color)
+            part_rect = part_surf.get_rect(topleft=(x, sizing.y_offset))
+            surf.blit(part_surf, part_rect)
+            rects.append(part_rect)
+            x += part_rect.width
+
+        return surf, rects, size
+
     @dataclass
     class TextSize:
         width: int
