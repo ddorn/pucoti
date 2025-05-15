@@ -9,13 +9,11 @@ from ..pygame_utils import split_rect
 from ..time_utils import fmt_duration
 
 
-class SocialScreen(PucotiScreen):
+class SocialLoginScreen(PucotiScreen):
     MUST_BE_BIG_WINDOW = True
 
     def __init__(self, ctx) -> None:
         super().__init__(ctx)
-
-        self.vertical = False
         self.login_edit = SentenceEdit(
             [
                 "Join ",
@@ -30,22 +28,56 @@ class SocialScreen(PucotiScreen):
             submit_callback=self.join_callback,
         )
 
+    def logic(self):
+        super().logic()
+        if self.ctx.config.social.enabled:
+            self.replace_state(SocialScreen(self.ctx))
+
     def join_callback(self, data: dict[str, str]):
-        self.ctx.config.social.username = data["name"]
-        self.ctx.config.social.room = data["room"]
+        self.ctx.config.social.username = data["name"].strip()
+        self.ctx.config.social.room = data["room"].strip()
         self.ctx.config.social.enabled = True
 
-    def draw_login(self, gfx: GFX, rect: pygame.Rect):
-        self.login_edit.draw(gfx, rect)
+    def draw(self, gfx: GFX):
+        super().draw(gfx)
+        self.login_edit.draw(gfx, self.layout()["main"])
+
+    def handle_event(self, event) -> bool:
+        if super().handle_event(event):
+            return True
+
+        if self.login_edit.handle_event(event):
+            return True
+
+
+class SocialScreen(PucotiScreen):
+    MUST_BE_BIG_WINDOW = True
+
+    def __init__(self, ctx) -> None:
+        super().__init__(ctx)
+
+        self.vertical = False
+
+    def logic(self):
+        super().logic()
+
+        if not self.ctx.config.social.enabled:
+            self.replace_state(SocialLoginScreen(self.ctx))
+            return
 
     def layout(self):
         layout = super().layout()
         rect = layout["main"]
 
+        timers_rect, room_rect, exit_rect = split_rect(rect, 1, 0.2, 0.1)
+        layout["timers"] = timers_rect
+        layout["room"] = room_rect
+        layout["exit"] = exit_rect
+
         # Split the rect into n sub-rect
         n = len(self.ctx.friend_activity)
         if n >= 2:
-            new = split_rect(rect, *[1] * n, horizontal=not self.vertical, spacing=0.1)
+            new = split_rect(timers_rect, *[1] * n, horizontal=not self.vertical, spacing=0.1)
             for i, r in enumerate(new):
                 layout[i] = r
         return layout
@@ -60,26 +92,33 @@ class SocialScreen(PucotiScreen):
 
         layout = self.layout()
         font = self.ctx.config.font.normal
+        room = self.ctx.config.social.room
 
-        if not self.ctx.config.social.enabled:
-            self.draw_login(gfx, layout["main"])
-            return
+        if len(self.ctx.friend_activity) == 0:
+            text = [("You're not online. Yet?", self.config.color.purpose)]
+        elif len(self.ctx.friend_activity) == 1:
+            text = [
+                ("You're alone. Tell your friends to join ", self.config.color.timer),
+                (room, self.config.color.purpose),
+                (".", self.config.color.timer),
+            ]
+        else:
+            text = [
+                ("Tell your friends to join ", self.config.color.timer),
+                (room, self.config.color.purpose),
+                (".", self.config.color.timer),
+            ]
 
-        if len(self.ctx.friend_activity) == 1:
-            room = self.ctx.config.social.room
-            text = f"Tell your friends to join {room}."
+        surf, rects, font_size = font.render_parts(
+            text, layout["room"].size, align=pygame.FONT_CENTER
+        )
+        room_rect = gfx.blit(surf, center=layout["room"].center)
+        # Show "Ctrl+Enter to exit" in the bottom right corner
+        exit_text = "CTRL+ENTER to exit"
+        surf = font.render(exit_text, font_size // 3, self.config.color.timer)
+        gfx.blit(surf, topright=room_rect.bottomright)
 
         if len(self.ctx.friend_activity) < 2:
-            if len(self.ctx.friend_activity) == 1:
-                room = self.ctx.config.social.room
-                text = f"Tell your friends to use\n--social <name>@{room}\n;)"
-            else:
-                text = "You're not online."
-            rect = layout["main"]
-            gfx.blit(
-                font.render(text, rect.size, self.config.color.purpose, align=pygame.FONT_CENTER),
-                center=rect.center,
-            )
             return
 
         for i, friend in enumerate(self.ctx.friend_activity):
@@ -128,14 +167,13 @@ class SocialScreen(PucotiScreen):
         if super().handle_event(event):
             return True
 
-        if self.login_edit.handle_event(event):
-            return True
-
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_v:
                 self.vertical = not self.vertical
-                # else:
-                # self.pop_state()
+                return True
+            elif event.key == pygame.K_RETURN and event.mod & pygame.KMOD_CTRL:
+                self.ctx.config.social.enabled = False
+                self.replace_state(SocialLoginScreen(self.ctx))
                 return True
 
         return False

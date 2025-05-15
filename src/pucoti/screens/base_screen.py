@@ -44,7 +44,7 @@ class PucotiScreen(luckypot.AppState):
                 "history": "list",
                 "social": "users",
                 "help": "help-circle",
-                "settings": "settings",
+                # "settings": "settings",
             }
             top_bar.inflate_ip(-30, -10)
 
