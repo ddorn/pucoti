@@ -35,6 +35,7 @@ R: reset timer
 RETURN: enter purpose
 L: list purpose history
 T: toggle total time
+SPACE: toggle big window
 P: reposition window
 - +: (in/de)crease window size
 H ?: show this help

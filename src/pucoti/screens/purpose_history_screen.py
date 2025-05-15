@@ -8,6 +8,8 @@ from .base_screen import PucotiScreen
 
 
 class PurposeHistoryScreen(PucotiScreen):
+    MUST_BE_BIG_WINDOW = True
+
     def __init__(self, ctx) -> None:
         super().__init__(ctx)
 

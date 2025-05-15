@@ -6,6 +6,7 @@ from .base_screen import PucotiScreen
 
 
 class HelpScreen(PucotiScreen):
+    MUST_BE_BIG_WINDOW = True
 
     def handle_event(self, event) -> bool:
         if super().handle_event(event):

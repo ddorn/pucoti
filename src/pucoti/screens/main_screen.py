@@ -85,6 +85,8 @@ class MainScreen(PucotiScreen):
                     self.push_state(purpose_history_screen.PurposeHistoryScreen(self.ctx))
                 case pg.K_s:
                     self.push_state(social_screen.SocialScreen(self.ctx))
+                case pg.K_ESCAPE:
+                    self.ctx.app.make_window_small()
                 case _:
                     return super().handle_event(event)
             return True

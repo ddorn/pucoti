@@ -8,11 +8,18 @@ from ..assets import load_icon
 
 class PucotiScreen(luckypot.AppState):
     FPS = 30
+    MUST_BE_BIG_WINDOW = False
 
     def __init__(self, ctx: Context):
         self.ctx = ctx
         self.buttons: dict[str, pygame.Rect] = {}
         super().__init__()
+
+    def on_enter(self):
+        super().on_enter()
+
+        if self.MUST_BE_BIG_WINDOW:
+            self.ctx.app.make_window_big()
 
     @property
     def config(self):

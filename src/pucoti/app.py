@@ -102,8 +102,8 @@ class App(luckypot.App[PucotiScreen]):
                     self.ctx.app.window,
                     *self.current_window_position,
                 )
-            elif event.key == pg.K_f:
-                self.toggle_big()
+            elif event.key == pg.K_SPACE:
+                self.toggle_big_window()
             elif event.key == pg.K_MINUS:
                 pygame_utils.scale_window(
                     self.window, 1 / constants.WINDOW_SCALE, constants.MIN_WINDOW_SIZE
@@ -140,20 +140,27 @@ class App(luckypot.App[PucotiScreen]):
         self.controller_server.stop()
         return super().on_exit()
 
-    def toggle_big(self):
+    def toggle_big_window(self):
         """Make the window big if small and vice-versa."""
         w_width, w_height = self.window.size
         small_width, small_height = self.config.window.small_size
 
         if w_width <= small_width or w_height <= small_height:
-            self.window.size = self.config.window.big_size
+            self.make_window_big()
         else:
-            self.window.size = self.config.window.small_size
+            self.make_window_small()
 
-            platforms.place_window(
-                self.window,
-                *self.current_window_position,
-            )
+    def make_window_small(self):
+        """Make the window small."""
+        self.window.size = self.config.window.small_size
+        platforms.place_window(
+            self.window,
+            *self.current_window_position,
+        )
+
+    def make_window_big(self):
+        """Make the window big."""
+        self.window.size = self.config.window.big_size
 
 
 defaults = PucotiConfig()
