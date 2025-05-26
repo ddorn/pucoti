@@ -46,6 +46,9 @@ class SocialLoginScreen(PucotiScreen):
         if super().handle_event(event):
             return True
 
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.pop_state()
+            return True
         if self.login_edit.handle_event(event):
             return True
 
@@ -170,6 +173,9 @@ class SocialScreen(PucotiScreen):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_v:
                 self.vertical = not self.vertical
+                return True
+            elif event.key == pygame.K_ESCAPE:
+                self.pop_state()
                 return True
             elif event.key == pygame.K_RETURN and event.mod & pygame.KMOD_CTRL:
                 self.ctx.config.social.enabled = False
