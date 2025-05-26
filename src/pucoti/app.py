@@ -210,7 +210,10 @@ def run(
     if config_file.exists():
         config = config.merge_partial_from_file(config_file)
     else:
-        raise typer.BadParameter(f"File {config_file} does not exist.")
+        # Use default config if file doesn't exist
+        print(f"Config file {config_file} not found. Using default configuration.")
+        print("To create a config file, run:\n")
+        typer.secho(f"    pucoti --print-config > {config_file}\n", fg=typer.colors.GREEN)
 
     to_ignore = {"config_file", "print_config"}
     renamed = {
