@@ -1,4 +1,5 @@
 import functools
+import re
 import threading
 import zmq
 import typer
@@ -78,6 +79,17 @@ def set_timer(timer: str):
     get_ctx().set_timer_to(time_utils.human_duration(timer))
 
 
+def clean_marvin_task_name(task_name: str) -> str:
+    """Remove markdown urls, and shorten other urls"""
+    # Remove markdown urls
+    task_name = re.sub(r"\[(.*?)\]\(.*?\)", r"\1", task_name)
+
+    # Shorten other urls e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ  -> youtube.com
+    task_name = re.sub(r"https?://(www\.)?([^/]+)\S*", r"\2", task_name)
+
+    return task_name
+
+
 @cli.command()
 @remote_if_not_in_main_app
 def task_track_from_marvin(timer: int, purpose: list[str]):
@@ -95,7 +107,9 @@ def task_track_from_marvin(timer: int, purpose: list[str]):
 
     if timer:
         get_ctx().set_timer_to(timer / 1000)
-    get_ctx().set_purpose(" ".join(purpose))
+    purpose = " ".join(purpose)
+    purpose = clean_marvin_task_name(purpose)
+    get_ctx().set_purpose(purpose)
 
 
 @cli.command()
@@ -109,11 +123,12 @@ def mark_done_from_marvin(task: list[str]):
     """
 
     ctx = get_ctx()
-    if ctx.purpose == " ".join(task):
+    if ctx.purpose == clean_marvin_task_name(task):
         ctx.set_purpose("")
     else:
         print("Purpose does not match current task.")
         print(f"Current purpose: {ctx.purpose}")
+        print(f"Task: {task}")
 
 
 class Controller:
