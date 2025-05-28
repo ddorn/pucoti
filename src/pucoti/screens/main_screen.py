@@ -171,11 +171,11 @@ class MainScreen(PucotiScreen):
     def show_timer(self, gfx, value: float, color, rect, anchor: str, label: str):
         """Show the timer in the given rect and anchor."""
 
-        mouse_pos = pygame.mouse.get_pos()
-        if rect.collidepoint(mouse_pos) and time() - self.last_mouse_move < 0.4:
-            text = label
-        else:
-            text = time_utils.fmt_duration(value)
+        # mouse_pos = pygame.mouse.get_pos()
+        # if rect.collidepoint(mouse_pos) and time() - self.last_mouse_move < 0.4:
+        #     text = label
+        # else:
+        text = time_utils.fmt_duration(value)
 
         t = self.config.font.big.render(
             text,
