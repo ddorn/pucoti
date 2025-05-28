@@ -1,7 +1,9 @@
+import random
 from time import time
 
 import pygame
 import pygame.locals as pg
+import luckypot
 
 from .. import time_utils
 from .. import pygame_utils
@@ -24,8 +26,10 @@ class MainScreen(PucotiScreen):
             color=ctx.config.color.purpose,
             font=ctx.config.font.normal,
             submit_callback=ctx.set_purpose,
-            autofocus=True,
+            autofocus=False,
         )
+        self.particles = luckypot.ParticleSystem()
+        self.scripts = []
 
         self.last_mouse_move = 0.0
         self.buttons: dict[str, pygame.Rect] = {}
@@ -50,6 +54,7 @@ class MainScreen(PucotiScreen):
 
     def logic(self):
         self.paused_logic()
+        self.particles.logic()
         return super().logic()
 
     def handle_event(self, event) -> bool:
@@ -87,6 +92,14 @@ class MainScreen(PucotiScreen):
                     self.push_state(social_screen.SocialScreen(self.ctx))
                 case pg.K_ESCAPE:
                     self.ctx.app.make_window_small()
+                case pg.K_RETURN:
+                    if event.mod & pg.KMOD_CTRL and self.ctx.purpose:
+                        self.ctx.set_purpose("")
+                        self.purpose_editor.text = ""
+                        self.done_particles()
+                    else:
+                        self.purpose_editor.editing = True
+
                 case _:
                     return super().handle_event(event)
             return True
@@ -168,6 +181,8 @@ class MainScreen(PucotiScreen):
         if purpose_rect := layout.get("purpose"):
             self.purpose_editor.draw(gfx, purpose_rect)
 
+        self.particles.draw(gfx)
+
     def show_timer(self, gfx, value: float, color, rect, anchor: str, label: str):
         """Show the timer in the given rect and anchor."""
 
@@ -186,3 +201,39 @@ class MainScreen(PucotiScreen):
 
         anchor_data = {anchor: getattr(rect, anchor)}
         return gfx.blit(t, **anchor_data)
+
+    def done_particles(self):
+        rect = pygame.Rect(0, 0, *self.ctx.app.window.size)
+        # So that they don't bounce off the top of the screen.
+        rect_without_top = rect.copy()
+        rect_without_top.height += 400
+        rect_without_top.y -= 400
+
+        centers = [
+            (rect.centerx, rect.centery / 2),
+            (rect.centerx / 2, rect.centery),
+            (rect.centerx * 3 / 2, rect.centery),
+        ]
+
+        for center in centers:
+            for _ in range(200):
+                color = random.choice(
+                    [
+                        self.config.color.timer,
+                        self.config.color.purpose,
+                        self.config.color.total_time,
+                    ]
+                )
+                self.particles.add(
+                    luckypot.CircleParticle(color)
+                    .builder()
+                    .at((center), random.randint(0, 360))
+                    .velocity(random.gauss(14, 2))
+                    .acceleration(-0.04)
+                    .anim_gravity((0, 0.5))
+                    .living(random.gauss(40, 10))
+                    .anim_fade()
+                    .anim_shrink()
+                    .anim_bounce_rect(rect_without_top)
+                    .build()
+                )
