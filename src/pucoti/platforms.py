@@ -9,8 +9,12 @@ import subprocess
 import sys
 import warnings
 import traceback
+import asyncio
 
+from desktop_notifier import DesktopNotifier, Icon
 import pygame
+
+from . import constants
 
 
 # Diego uses sway, and it needs a few tweaks as it's a non-standard window manager.
@@ -115,3 +119,29 @@ def _get_active_window_title_and_class() -> tuple[str, str]:
         raise NotImplementedError("This window manager is not supported.")
 
     return wm_name, wm_class
+
+
+def send_desktop_notification(title: str, message: str) -> None:
+    """Send a cross-platform desktop notification. Fails silently.
+
+    Args:
+        title: Notification title
+        message: Notification message
+    """
+
+    # This likely doesn't work on MacOS
+    # see: https://github.com/samschott/desktop-notifier?tab=readme-ov-file#notes-on-macos
+    # as the executable needs to be signed.
+
+    try:
+
+        async def _notify():
+            notifier = DesktopNotifier(app_name="PUCOTI")
+            icon = Icon(path=constants.PUCOTI_ICON)
+            await notifier.send(title=title, message=message, icon=icon)
+
+        asyncio.run(_notify())
+
+    except Exception as e:
+        # Silent failure with basic logging as requested
+        print(f"Failed to send desktop notification: {e}")

@@ -85,6 +85,25 @@ class SocialConfig(Config):
         return cls(username=username, room=room, enabled=True)
 
 
+class NotificationConfig(Config):
+    """Desktop notification settings for when timer reaches zero.
+
+    For more advanced notification configuration (custom icons, sounds, etc.),
+    use the run_at config with system notification commands and disable this one.
+    """
+
+    enabled: Annotated[
+        bool, Field(description="Enable desktop notifications when timer reaches zero")
+    ] = True
+    title: Annotated[str, Field(description="Notification title")] = "Time's up!"
+    message: Annotated[
+        str,
+        Field(
+            description="Notification message. Use {purpose} for current purpose, {purpose_time} for time spent on purpose"
+        ),
+    ] = "You've been working on {purpose} for {purpose_time}. It's time to take a step back and think about what you want to do next."
+
+
 class PucotiConfig(Config):
     """
     The main configuration for PUCOTI.
@@ -117,3 +136,4 @@ class PucotiConfig(Config):
     window: WindowConfig = WindowConfig()
     run_at: list[RunAtConfig] = field(default_factory=list)
     social: SocialConfig = SocialConfig()
+    notification: NotificationConfig = NotificationConfig()

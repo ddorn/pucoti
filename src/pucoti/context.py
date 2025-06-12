@@ -10,7 +10,7 @@ import pygame
 
 from .callback import CountdownCallback
 
-from . import constants, db, time_utils, pygame_utils
+from . import constants, db, time_utils, pygame_utils, platforms
 from .config import PucotiConfig
 from .purpose import Purpose
 from .server_comunication import UpdateRoomRequest, UserData, send_update
@@ -47,6 +47,7 @@ class Context:
         """Timestamp when the timer hits 0."""
         self.last_rung = 0.0
         self.nb_rings = 0
+        self.notification_sent = False
 
         self.callbacks = [CountdownCallback(cfg) for cfg in self.config.run_at]
 
@@ -115,6 +116,15 @@ class Context:
 
     def ring_if_needed(self):
         remaining = self.remaining_time
+
+        # Send desktop notification when timer first goes negative
+        if remaining < 0 and not self.notification_sent:
+            self.notification_sent = True
+            self.send_times_up_notification()
+        elif remaining > 0:
+            self.notification_sent = False
+
+        # Ring logic (existing)
         if (
             remaining < 0
             and time() - self.last_rung > self.config.ring_every
@@ -134,3 +144,22 @@ class Context:
         # And execute the callbacks.
         for callback in self.callbacks:
             callback.update(self.timer_end - (time() - self.start))
+
+    def send_times_up_notification(self):
+        """Send cross-platform desktop notification."""
+        if not self.config.notification.enabled:
+            return
+
+        # Prepare template variables
+        purpose = self.purpose or "your focus session"
+        purpose_time = time_utils.fmt_duration(time() - self.purpose_start_time)
+
+        # Format the message
+        title = self.config.notification.title
+        message = self.config.notification.message.format(
+            purpose=purpose,
+            purpose_time=purpose_time,
+        )
+
+        # Use platform-specific notification function
+        platforms.send_desktop_notification(title, message)
