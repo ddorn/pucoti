@@ -1,0 +1,295 @@
+name: Build Cross-Platform Apps
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'webapp/**'
+      - '.github/workflows/build-apps.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'webapp/**'
+      - '.github/workflows/build-apps.yml'
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            shell: bash
+          - os: windows-latest
+            platform: win
+            shell: bash
+          - os: macos-latest
+            platform: mac
+            shell: bash
+    
+    defaults:
+      run:
+        working-directory: webapp
+        shell: ${{ matrix.shell }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Install system dependencies (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq wget fuse libfuse2 desktop-file-utils
+
+      - name: Install system dependencies (Windows)
+        if: matrix.platform == 'win'
+        run: |
+          # Install jq for JSON parsing
+          choco install jq -y
+
+      - name: Install system dependencies (macOS)
+        if: matrix.platform == 'mac'
+        run: |
+          # jq should already be available on macOS runners
+          echo "macOS dependencies ready"
+
+      - name: Install Neutralino CLI
+        run: npm install -g @neutralinojs/neu
+
+      - name: Install frontend dependencies
+        run: |
+          cd www
+          pnpm install
+
+      - name: Copy build scripts
+        run: |
+          git clone https://github.com/hschneider/neutralino-build-scripts.git build-scripts
+          cp build-scripts/build-${{ matrix.platform }}.sh ./
+          cp build-scripts/preproc-${{ matrix.platform }}.sh ./
+          cp build-scripts/postproc-${{ matrix.platform }}.sh ./
+          cp -r build-scripts/_app_scaffolds ./
+          chmod +x build-${{ matrix.platform }}.sh preproc-${{ matrix.platform }}.sh postproc-${{ matrix.platform }}.sh
+
+      - name: Build Neutralino app
+        run: ./build-${{ matrix.platform }}.sh
+
+      - name: Download AppImage tools (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          mkdir -p appimage-tools
+          cd appimage-tools
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage
+
+      - name: Create AppImages (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          cd dist
+
+          # Create AppImage for x64
+          if [ -d "linux_x64" ]; then
+            mkdir -p appimage-x64/usr/bin
+            mkdir -p appimage-x64/usr/share/applications
+            mkdir -p appimage-x64/usr/share/icons/hicolor/256x256/apps
+
+            # Copy binary and resources
+            cp linux_x64/Pucoti/pucoti-linux_x64 appimage-x64/usr/bin/pucoti
+            cp linux_x64/Pucoti/resources.neu appimage-x64/usr/bin/
+            if [ -d "linux_x64/Pucoti/extensions" ]; then
+              cp -r linux_x64/Pucoti/extensions appimage-x64/usr/bin/
+            fi
+
+            # Copy icon and desktop file
+            cp linux_x64/Pucoti/pucoti.png appimage-x64/usr/share/icons/hicolor/256x256/apps/pucoti.png
+            cp linux_x64/Pucoti/Pucoti.desktop appimage-x64/usr/share/applications/pucoti.desktop
+
+            # Update desktop file for AppImage
+            sed -i 's|Exec=.*|Exec=pucoti|g' appimage-x64/usr/share/applications/pucoti.desktop
+            sed -i 's|Icon=.*|Icon=pucoti|g' appimage-x64/usr/share/applications/pucoti.desktop
+            sed -i '/^Encoding=/d' appimage-x64/usr/share/applications/pucoti.desktop
+            echo "Categories=Utility;" >> appimage-x64/usr/share/applications/pucoti.desktop
+
+            # Create AppRun script
+            cat > appimage-x64/AppRun << 'EOF'
+          #!/bin/bash
+          SELF=$(readlink -f "$0")
+          HERE=${SELF%/*}
+          export PATH="${HERE}/usr/bin/:${PATH}"
+          cd "${HERE}/usr/bin"
+          exec "${HERE}/usr/bin/pucoti" "$@"
+          EOF
+            chmod +x appimage-x64/AppRun
+
+            # Create desktop file in root
+            cp appimage-x64/usr/share/applications/pucoti.desktop appimage-x64/
+
+            # Create icon link in root
+            ln -sf usr/share/icons/hicolor/256x256/apps/pucoti.png appimage-x64/pucoti.png
+
+            # Build AppImage
+            ARCH=x86_64 ../appimage-tools/appimagetool-x86_64.AppImage appimage-x64 pucoti-linux-x64.AppImage
+          fi
+
+      - name: Create release archives
+        run: |
+          cd dist
+
+          # Linux archives
+          if [ "${{ matrix.platform }}" = "linux" ]; then
+            if [ -d "linux_x64" ]; then
+              tar -czf pucoti-linux-x64.tar.gz linux_x64/
+            fi
+          fi
+
+          # Windows archives
+          if [ "${{ matrix.platform }}" = "win" ]; then
+            if [ -d "win_x64" ]; then
+              # Create zip archive
+              7z a pucoti-windows-x64.zip win_x64/
+
+              # Also create a simple folder structure for easier distribution
+              mkdir -p pucoti-windows-x64-portable
+              cp -r win_x64/* pucoti-windows-x64-portable/
+              7z a pucoti-windows-x64-portable.zip pucoti-windows-x64-portable/
+            fi
+          fi
+
+          # macOS archives
+          if [ "${{ matrix.platform }}" = "mac" ]; then
+            if [ -d "mac_x64" ]; then
+              zip -r pucoti-mac-x64.zip mac_x64/
+            fi
+            if [ -d "mac_arm64" ]; then
+              zip -r pucoti-mac-arm64.zip mac_arm64/
+            fi
+            if [ -d "mac_universal" ]; then
+              zip -r pucoti-mac-universal.zip mac_universal/
+            fi
+          fi
+
+      # Upload artifacts for workflow runs (non-release)
+      - name: Upload Linux artifacts
+        if: matrix.platform == 'linux' && github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pucoti-linux-builds
+          path: |
+            webapp/dist/pucoti-linux-x64.tar.gz
+            webapp/dist/pucoti-linux-x64.AppImage
+            webapp/dist/linux_x64/
+          retention-days: 30
+
+      - name: Upload Windows artifacts
+        if: matrix.platform == 'win' && github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pucoti-windows-builds
+          path: |
+            webapp/dist/pucoti-windows-x64.zip
+            webapp/dist/pucoti-windows-x64-portable.zip
+            webapp/dist/win_x64/
+          retention-days: 30
+
+      - name: Upload macOS artifacts
+        if: matrix.platform == 'mac' && github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pucoti-mac-builds
+          path: |
+            webapp/dist/pucoti-mac-*.zip
+            webapp/dist/mac_*/
+          retention-days: 30
+
+      # Upload to release assets when triggered by release
+      - name: Upload Linux release assets
+        if: matrix.platform == 'linux' && github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: webapp/dist/pucoti-linux-x64.tar.gz
+          asset_name: pucoti-linux-x64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Linux AppImage release asset
+        if: matrix.platform == 'linux' && github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: webapp/dist/pucoti-linux-x64.AppImage
+          asset_name: pucoti-linux-x64.AppImage
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows release assets
+        if: matrix.platform == 'win' && github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: webapp/dist/pucoti-windows-x64.zip
+          asset_name: pucoti-windows-x64.zip
+          asset_content_type: application/zip
+
+      - name: Upload Windows portable release asset
+        if: matrix.platform == 'win' && github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: webapp/dist/pucoti-windows-x64-portable.zip
+          asset_name: pucoti-windows-x64-portable.zip
+          asset_content_type: application/zip
+
+      - name: Upload macOS x64 release asset
+        if: matrix.platform == 'mac' && github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: webapp/dist/pucoti-mac-x64.zip
+          asset_name: pucoti-mac-x64.zip
+          asset_content_type: application/zip
+
+      - name: Upload macOS arm64 release asset
+        if: matrix.platform == 'mac' && github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: webapp/dist/pucoti-mac-arm64.zip
+          asset_name: pucoti-mac-arm64.zip
+          asset_content_type: application/zip
+
+      - name: Upload macOS universal release asset
+        if: matrix.platform == 'mac' && github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: webapp/dist/pucoti-mac-universal.zip
+          asset_name: pucoti-mac-universal.zip
+          asset_content_type: application/zip
