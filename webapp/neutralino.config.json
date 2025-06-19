@@ -52,6 +52,12 @@
       "appIcon": "./packaging/icons/pucoti.png",
       "appPath": "/usr/share/Pucoti",
       "appIconPath": "/usr/share/Pucoti/icon.png"
+    },
+
+    "win": {
+      "architecture": ["x64"],
+      "appName": "Pucoti",
+      "appIcon": "./packaging/icons/pucoti.ico"
     }
   }
 }

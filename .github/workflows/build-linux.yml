@@ -212,54 +212,6 @@ jobs:
             tar -czf pucoti-linux-armhf.tar.gz linux_armhf/
           fi
 
-      - name: Upload x64 bundle artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pucoti-linux-x64-bundle
-          path: webapp/dist/pucoti-linux-x64.tar.gz
-          retention-days: 30
-        if: always()
-
-      - name: Upload arm64 bundle artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pucoti-linux-arm64-bundle
-          path: webapp/dist/pucoti-linux-arm64.tar.gz
-          retention-days: 30
-        if: always()
-
-      - name: Upload armhf bundle artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pucoti-linux-armhf-bundle
-          path: webapp/dist/pucoti-linux-armhf.tar.gz
-          retention-days: 30
-        if: always()
-
-      - name: Upload x64 AppImage
-        uses: actions/upload-artifact@v4
-        with:
-          name: pucoti-linux-x64-appimage
-          path: webapp/dist/pucoti-linux-x64.AppImage
-          retention-days: 30
-        if: always()
-
-      - name: Upload arm64 AppImage content
-        uses: actions/upload-artifact@v4
-        with:
-          name: pucoti-linux-arm64-appimage-content
-          path: webapp/dist/pucoti-linux-arm64-appimage-content.tar.gz
-          retention-days: 30
-        if: always()
-
-      - name: Upload armhf AppImage content
-        uses: actions/upload-artifact@v4
-        with:
-          name: pucoti-linux-armhf-appimage-content
-          path: webapp/dist/pucoti-linux-armhf-appimage-content.tar.gz
-          retention-days: 30
-        if: always()
-
       - name: Upload individual app bundles
         uses: actions/upload-artifact@v4
         with:
@@ -269,4 +221,3 @@ jobs:
             webapp/dist/linux_arm64/Pucoti
             webapp/dist/linux_armhf/Pucoti
           retention-days: 30
-        if: always()
