@@ -4,6 +4,7 @@
   "defaultMode": "window",
   "documentRoot": "/www/dist/",
   "url": "/",
+  "port": 20011,
   "enableServer": true,
   "enableNativeAPI": true,
   "nativeAllowList": [

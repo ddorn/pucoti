@@ -4,7 +4,6 @@ import { usePucotiStore } from './stores/counter'
 import { humanTimeToMs } from './utils'
 import { tickClock, useIntervalFn } from './lib'
 import { onMounted, onUnmounted } from 'vue'
-import { filesystem } from '@neutralinojs/lib'
 
 const audio = new Audio('/bell.mp3')
 
@@ -27,16 +26,6 @@ function checkTime() {
 
 useIntervalFn(tickClock, 1000)
 useIntervalFn(checkTime, 500)
-
-// Test Neutralino.js integration
-onMounted(async () => {
-  try {
-    const files = await filesystem.readDirectory('./')
-    console.log('Neutralino.js filesystem API working! Current directory contents:', files)
-  } catch (error) {
-    console.error('Error testing Neutralino.js filesystem API:', error)
-  }
-})
 </script>
 
 <template>
