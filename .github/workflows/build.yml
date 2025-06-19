@@ -67,12 +67,17 @@ jobs:
           mkdir -p "${BUILD_DIR}"
           cp "${EXE_SRC}" "${BUILD_DIR}/"
           cp "${RES_SRC}" "${BUILD_DIR}/"
-          cp "${APP_ICON}" "${BUILD_DIR}/$(basename ${APP_ICON})"
+          ICON_FILENAME=$(basename ${APP_ICON})
+          ICON_NAME=${ICON_FILENAME%.*}
+          # Copy icon to AppDir root for AppImage standard
+          cp "${APP_ICON}" "${BUILD_DIR}/${ICON_FILENAME}"
+          # Also copy with standard name for AppImage
+          cp "${APP_ICON}" "${BUILD_DIR}/${APP_NAME}.png"
           cp "${SCAFFOLD_DESKTOP}" "${BUILD_DIR}/${APP_NAME}.desktop"
           if [ -d "${EXT_SRC}" ]; then cp -r "${EXT_SRC}" "${BUILD_DIR}/"; fi
 
           sed -i "s/{APP_NAME}/${APP_NAME}/g" "${BUILD_DIR}/${APP_NAME}.desktop"
-          sed -i "s/{APP_ICON_LOCATION}/$(basename ${APP_ICON})/g" "${BUILD_DIR}/${APP_NAME}.desktop"
+          sed -i "s|{APP_ICON_LOCATION}|${APP_NAME}|g" "${BUILD_DIR}/${APP_NAME}.desktop"
           sed -i "s|{APP_EXEC}|./${APP_BINARY}-linux_x64|g" "${BUILD_DIR}/${APP_NAME}.desktop"
 
           echo "#!/bin/sh" > "${BUILD_DIR}/AppRun"
