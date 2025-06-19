@@ -3,6 +3,8 @@ import { ref, nextTick, useTemplateRef, computed } from 'vue'
 import Button from '@/components/Button.vue'
 import Timer from '@/components/Timer.vue'
 import IntentionHistory from '@/components/IntentionHistory.vue'
+import CreateRoomModal from '@/components/CreateRoomModal.vue'
+import JoinRoomModal from '@/components/JoinRoomModal.vue'
 import { usePucotiStore } from '@/stores/counter'
 import router from '@/router'
 import { humanTimeToMs, MINUTE, timerToString } from '@/utils'
@@ -10,6 +12,10 @@ import { useListenerFn } from '@/lib'
 import TimersList from '@/components/TimersList.vue'
 
 const store = usePucotiStore()
+
+// Social modals
+const showCreateRoomModal = ref(false)
+const showJoinRoomModal = ref(false)
 
 // --- Editing Time ---
 const isEditingTime = ref<boolean>(false)
@@ -26,7 +32,7 @@ const startEditingTime = () => {
 const updateTimer = (e: Event) => {
   const target = e.target as HTMLInputElement
   try {
-    let newTime = humanTimeToMs(target.value)
+    const newTime = humanTimeToMs(target.value)
     store.setRingIn(newTime)
   } catch (e) {
     console.error(e)
@@ -74,7 +80,7 @@ function onIntentionInput(e: KeyboardEvent) {
 }
 
 // --- Global Shortcuts ---
-useListenerFn('keydown', (e: KeyboardEvent) => {
+const handleKeydown = (e: KeyboardEvent) => {
   if (isEditingIntention.value || isEditingTime.value) {
     return
   }
@@ -104,6 +110,14 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
     case 'p':
       router.push('/intentionhistory')
       break
+    case 'c':
+    case 'C':
+      showCreateRoomModal.value = true
+      break
+    case 'e':
+    case 'E':
+      showJoinRoomModal.value = true
+      break
     case 'Enter':
       startEditingIntention()
       break
@@ -121,7 +135,9 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
   }
 
   e.preventDefault()
-})
+}
+
+useListenerFn('keydown', handleKeydown)
 
 const timeOnPurpose = computed(() => {
   return timerToString(store.timers.main)
@@ -192,9 +208,24 @@ const timeOnPurpose = computed(() => {
           <Button label="+5 min" shortcut="K" @click="store.addTime(5 * MINUTE)" />
         </div>
       </div>
-      <div class="footer-action-items mt-[clamp(1em,1.5vw,100vw)] flex space-x-[1vw]">
-        <Button label="Create room" shortcut="C" outline />
-        <Button label="Enter room" shortcut="E" outline />
+      <div
+        class="footer-action-items mt-[clamp(1em,1.5vw,100vw)] flex space-x-[1vw] transition-opacity"
+        :class="{ 'opacity-50': store.serverOffline }"
+      >
+        <Button
+          label="Create room"
+          shortcut="C"
+          outline
+          @click="showCreateRoomModal = true"
+          :disabled="store.serverOffline"
+        />
+        <Button
+          label="Enter room"
+          shortcut="E"
+          outline
+          @click="showJoinRoomModal = true"
+          :disabled="store.serverOffline"
+        />
       </div>
       <div class="below">
         <TimersList />
@@ -202,6 +233,16 @@ const timeOnPurpose = computed(() => {
       </div>
     </div>
   </main>
+
+  <!-- Social Modals -->
+  <CreateRoomModal 
+    :show="showCreateRoomModal" 
+    @close="showCreateRoomModal = false" 
+  />
+  <JoinRoomModal 
+    :show="showJoinRoomModal" 
+    @close="showJoinRoomModal = false" 
+  />
 </template>
 
 <style scoped>

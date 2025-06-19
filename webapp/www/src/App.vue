@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterView } from 'vue-router'
 import { usePucotiStore } from './stores/counter'
 import { humanTimeToMs } from './utils'
 import { tickClock, useIntervalFn } from './lib'
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted } from 'vue'
 
 const audio = new Audio('/bell.mp3')
 
@@ -26,6 +26,17 @@ function checkTime() {
 
 useIntervalFn(tickClock, 1000)
 useIntervalFn(checkTime, 500)
+
+// Social features - periodic server updates
+function updateSocialServer() {
+  store.updateServer()
+}
+
+useIntervalFn(updateSocialServer, 5000) // Every 5 seconds, same as legacy app
+
+onMounted(() => {
+  store.initializeSocial()
+})
 </script>
 
 <template>

@@ -125,15 +125,47 @@ jobs:
             sed -i '/^Encoding=/d' appimage-x64/usr/share/applications/pucoti.desktop
             echo "Categories=Utility;" >> appimage-x64/usr/share/applications/pucoti.desktop
 
+            # Create wrapper script for Neutralino binary
+            cat > appimage-x64/usr/bin/pucoti-wrapper << 'EOF'
+#!/bin/bash
+# Neutralino wrapper script to handle temp directory issues in AppImage
+
+# Get the real binary path
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NEUTRALINO_BINARY="$SCRIPT_DIR/pucoti-real"
+
+# Set temp directory environment variables
+export TMPDIR="${TMPDIR:-/tmp}"
+export TMP="${TMP:-/tmp}"
+export TEMP="${TEMP:-/tmp}"
+
+# Set XDG Base Directory variables
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+# Create temp directories if they don't exist
+mkdir -p "$TMPDIR" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_CONFIG_HOME" 2>/dev/null || true
+
+# Execute the real Neutralino binary
+exec "$NEUTRALINO_BINARY" "$@"
+EOF
+            chmod +x appimage-x64/usr/bin/pucoti-wrapper
+
+            # Rename original binary and replace with wrapper
+            mv appimage-x64/usr/bin/pucoti appimage-x64/usr/bin/pucoti-real
+            mv appimage-x64/usr/bin/pucoti-wrapper appimage-x64/usr/bin/pucoti
+
             # Create AppRun script
             cat > appimage-x64/AppRun << 'EOF'
-          #!/bin/bash
-          SELF=$(readlink -f "$0")
-          HERE=${SELF%/*}
-          export PATH="${HERE}/usr/bin/:${PATH}"
-          cd "${HERE}/usr/bin"
-          exec "${HERE}/usr/bin/pucoti" "$@"
-          EOF
+#!/bin/bash
+SELF=$(readlink -f "$0")
+HERE=${SELF%/*}
+export PATH="${HERE}/usr/bin/:${PATH}"
+cd "${HERE}/usr/bin"
+exec "${HERE}/usr/bin/pucoti" "$@"
+EOF
             chmod +x appimage-x64/AppRun
 
             # Create desktop file in root

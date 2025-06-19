@@ -3,6 +3,25 @@ import { defineStore } from 'pinia'
 import type { IntentionHistoryItem, Timer } from '@/types'
 import { tickClock } from '@/lib'
 
+export interface SocialConfig {
+  room: string
+  username: string
+  sendPurpose: boolean
+  server: string
+}
+
+export interface UpdateRoomRequest {
+  username: string
+  timer_end: number
+  start: number
+  purpose?: string
+  purpose_start?: number
+}
+
+export interface UserData extends UpdateRoomRequest {
+  last_update: number
+}
+
 export const usePucotiStore = defineStore('pucoti', {
   state: () => {
     const countdownDuration = 10 * 60 * 1000
@@ -38,6 +57,16 @@ export const usePucotiStore = defineStore('pucoti', {
           color: 'var(--color-acid)',
         },
       } as Record<string, Timer>,
+      social: {
+        room: 'public',
+        username: '',
+        sendPurpose: true,
+        server: 'https://sharepoint.pucoti.com',
+      } as SocialConfig,
+      friendActivity: [] as UserData[],
+      lastServerUpdate: 0,
+      userId: crypto.randomUUID(),
+      serverOffline: false,
     }
   },
   getters: {
@@ -92,6 +121,88 @@ export const usePucotiStore = defineStore('pucoti', {
         start: now,
       })
       this.timers.onIntention.zeroAt = now
+    },
+    setSocialConfig(config: Partial<SocialConfig>) {
+      this.social = { ...this.social, ...config }
+      // Save to localStorage
+      localStorage.setItem('pucoti-social-config', JSON.stringify(this.social))
+    },
+    joinRoom(room: string, username: string) {
+      this.setSocialConfig({
+        room: room.trim(),
+        username: username.trim(),
+      })
+    },
+    leaveRoom() {
+      this.setSocialConfig({ room: '', username: '' })
+      this.friendActivity = []
+      // Clear persisted config
+      localStorage.removeItem('pucoti-social-config')
+    },
+    async updateServer(force = false) {
+      const UPDATE_SERVER_EVERY = 5000 // 5 seconds (same as legacy app)
+      const now = Date.now()
+      
+      if (!force && now - this.lastServerUpdate < UPDATE_SERVER_EVERY) {
+        return
+      }
+
+      if (!this.social.username || !this.social.room) {
+        return
+      }
+
+      this.lastServerUpdate = now
+
+      const payload: UpdateRoomRequest = {
+        username: this.social.username,
+        timer_end: this.timers.main.zeroAt,
+        start: this.pucotiStart,
+        purpose: this.social.sendPurpose ? this.intention : undefined,
+        purpose_start: this.social.sendPurpose ? this.intentionStart : undefined,
+      }
+
+      try {
+        const response = await fetch(
+          `${this.social.server}/room/${this.social.room}/user/${this.userId}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          }
+        )
+
+        if (response.ok) {
+          const data = await response.json()
+          this.friendActivity = data as UserData[]
+          this.serverOffline = false
+        } else {
+          console.error('Failed to update server:', response.statusText)
+          this.serverOffline = true
+        }
+      } catch (error) {
+        console.error('Error updating server:', error)
+        this.serverOffline = true
+      }
+    },
+    loadSocialConfig() {
+      const saved = localStorage.getItem('pucoti-social-config')
+      if (saved) {
+        try {
+          const config = JSON.parse(saved) as SocialConfig
+          this.social = { ...this.social, ...config }
+        } catch (error) {
+          console.error('Failed to load social config:', error)
+        }
+      }
+    },
+    initializeSocial() {
+      this.loadSocialConfig()
+      // Start sending updates immediately if we're already in a room
+      if (this.social.room && this.social.username) {
+        this.updateServer(true)
+      }
     },
   },
 })
