@@ -40,9 +40,13 @@ jobs:
             echo "C:\Program Files\jq" >> $GITHUB_PATH
           fi
 
+      - name: Install frontend dependencies
+        run: |
+          cd www
+          pnpm install
+
       - name: Build Neutralino App
         run: pnpx @neutralinojs/neu build --release
-        working-directory: webapp
 
       - name: Package Linux Build
         if: runner.os == 'Linux'
@@ -99,7 +103,7 @@ jobs:
           EXE_SRC="./dist/${APP_BINARY}/${APP_BINARY}-mac_x64"
           RES_SRC="./dist/${APP_BINARY}/resources.neu"
           EXT_SRC="./dist/${APP_BINARY}/extensions"
-          INFO_PLIST_SCAFFOLD="./packaging/_app_scaffolds/mac/myapp.app/Contents/Info.plist"
+          INFO_PLIST_SCAFFOLD="./packaging/app_scaffolds/mac/myapp.app/Contents/Info.plist"
 
           mkdir -p "${MACOS_DIR}"
           mkdir -p "${RESOURCES_DIR}"
@@ -151,5 +155,5 @@ jobs:
         with:
           name: pucoti-build-${{ runner.os }}
           path: |
-            pucoti/webapp/dist/*.AppImage
-            pucoti/webapp/dist/*.zip
+            webapp/dist/*.AppImage
+            webapp/dist/*.zip
