@@ -42,7 +42,7 @@ jobs:
 
       - name: Build Neutralino App
         run: pnpx @neutralinojs/neu build --release
-        working-directory: webapp/www
+        working-directory: webapp
 
       - name: Package Linux Build
         if: runner.os == 'Linux'

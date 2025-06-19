@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { ref, nextTick, useTemplateRef } from 'vue'
+import { ref, nextTick, useTemplateRef, computed, onMounted, onUnmounted } from 'vue'
 import Button from '@/components/Button.vue'
-import AppLogo from '@/components/AppLogo.vue'
 import Timer from '@/components/Timer.vue'
 import IntentionHistory from '@/components/IntentionHistory.vue'
 import { usePucotiStore } from '@/stores/counter'
-import { RouterLink } from 'vue-router'
 import router from '@/router'
-import { humanTimeToMs, MINUTE } from '@/utils'
+import { humanTimeToMs, MINUTE, timerToString } from '@/utils'
 import { useListenerFn } from '@/lib'
 import TimersList from '@/components/TimersList.vue'
 
 const store = usePucotiStore()
 
+// --- Editing Time ---
 const isEditingTime = ref<boolean>(false)
 const newTimeValue = ref<string>('')
 const timeInputRef = ref<HTMLInputElement | null>(null)
@@ -24,9 +23,10 @@ const startEditingTime = () => {
     }
   })
 }
-const updateTimer = (e) => {
+const updateTimer = (e: Event) => {
+  const target = e.target as HTMLInputElement
   try {
-    let newTime = humanTimeToMs(e.target.value)
+    let newTime = humanTimeToMs(target.value)
     store.setRingIn(newTime)
   } catch (e) {
     console.error(e)
@@ -40,6 +40,7 @@ const stopEditingTime = () => {
   newTimeValue.value = ''
 }
 
+// --- Editing Intention ---
 const isEditingIntention = ref<boolean>(false)
 const $intention = useTemplateRef<HTMLInputElement>('intention')
 
@@ -54,27 +55,26 @@ const startEditingIntention = () => {
 }
 
 const stopEditingIntention = () => {
-  $intention.value = store.intention // Revert to the current store value
-  $intention.value.blur() // blur to take focus away from the input
+  if ($intention.value) {
+    $intention.value.value = store.intention
+    $intention.value.blur()
+  }
   isEditingIntention.value = false
 }
 
 function onIntentionInput(e: KeyboardEvent) {
   e.stopPropagation()
-
   const target = e.target as HTMLInputElement
-
   if (e.key === 'Enter') {
     store.setIntention(target.value)
     stopEditingIntention()
   } else if (e.key === 'Escape') {
-    target.value = store.intention
     stopEditingIntention()
   }
 }
 
+// --- Global Shortcuts ---
 useListenerFn('keydown', (e: KeyboardEvent) => {
-  // If we are editing either intention or time, global shortcuts are disabled
   if (isEditingIntention.value || isEditingTime.value) {
     return
   }
@@ -108,8 +108,6 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
       startEditingIntention()
       break
     default:
-      // Key corresponding to 0-9 -> set to that minute
-      // + if shift is pressed, set to 10*key
       if (e.code.startsWith('Digit')) {
         let digit = parseInt(e.code[5])
         if (e.shiftKey) {
@@ -124,10 +122,26 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
 
   e.preventDefault()
 })
+
+const timeOnPurpose = computed(() => {
+  return timerToString(store.timers.main)
+})
 </script>
 
 <template>
-  <main class="bg-dark grow p-[2vw_2vw_0_1vw]">
+  <div v-if="isMiniView" class="mini-view bg-dark">
+    <div class="text-[1.8em] font-display text-acid" @click="startEditingIntention">
+      {{ store.intention || 'Enter your intention' }}
+    </div>
+    <div class="main-timer-container flex-grow">
+      <Timer :timer="store.timers.main" color="var(--color-light)" />
+    </div>
+    <div class="time-on-purpose text-center font-display text-acid text-[2em]">
+      {{ timeOnPurpose }}
+    </div>
+  </div>
+
+  <main v-else class="bg-dark grow p-[2vw_2vw_0_1vw]">
     <div class="mt-[clamp(1em,1.5vw,100vw)] text-center">
       <div
         v-if="!isEditingIntention"
@@ -189,6 +203,25 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
 </template>
 
 <style scoped>
+.mini-view {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 1em;
+  text-align: center;
+  gap: 1em;
+}
+
+.mini-view .main-timer-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100px;
+}
+
 .main-layout {
   grid-template-areas:
     'action-left timer action-right'
@@ -202,7 +235,8 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
   grid-area: action-left;
 }
 
-.main-timer-container {
+.main-timer-container,
+input.main-timer-container {
   grid-area: timer;
 }
 
