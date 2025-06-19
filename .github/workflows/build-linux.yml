@@ -85,6 +85,8 @@ jobs:
             # Update desktop file for AppImage
             sed -i 's|Exec=.*|Exec=pucoti|g' appimage-x64/usr/share/applications/pucoti.desktop
             sed -i 's|Icon=.*|Icon=pucoti|g' appimage-x64/usr/share/applications/pucoti.desktop
+            sed -i '/^Encoding=/d' appimage-x64/usr/share/applications/pucoti.desktop
+            echo "Categories=Utility;Development;" >> appimage-x64/usr/share/applications/pucoti.desktop
             
             # Create AppRun script
             cat > appimage-x64/AppRun << 'EOF'
@@ -127,6 +129,8 @@ jobs:
             # Update desktop file for AppImage
             sed -i 's|Exec=.*|Exec=pucoti|g' appimage-arm64/usr/share/applications/pucoti.desktop
             sed -i 's|Icon=.*|Icon=pucoti|g' appimage-arm64/usr/share/applications/pucoti.desktop
+            sed -i '/^Encoding=/d' appimage-arm64/usr/share/applications/pucoti.desktop
+            echo "Categories=Utility;Development;" >> appimage-arm64/usr/share/applications/pucoti.desktop
             
             # Create AppRun script
             cat > appimage-arm64/AppRun << 'EOF'
@@ -169,6 +173,8 @@ jobs:
             # Update desktop file for AppImage
             sed -i 's|Exec=.*|Exec=pucoti|g' appimage-armhf/usr/share/applications/pucoti.desktop
             sed -i 's|Icon=.*|Icon=pucoti|g' appimage-armhf/usr/share/applications/pucoti.desktop
+            sed -i '/^Encoding=/d' appimage-armhf/usr/share/applications/pucoti.desktop
+            echo "Categories=Utility;Development;" >> appimage-armhf/usr/share/applications/pucoti.desktop
             
             # Create AppRun script
             cat > appimage-armhf/AppRun << 'EOF'
