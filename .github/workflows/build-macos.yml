@@ -59,21 +59,21 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-mac-x64
-          path: dist/pucoti-mac-x64.zip
+          path: webapp/dist/pucoti-mac-x64.zip
           retention-days: 30
 
       - name: Upload arm64 build artifact
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-mac-arm64
-          path: dist/pucoti-mac-arm64.zip
+          path: webapp/dist/pucoti-mac-arm64.zip
           retention-days: 30
 
       - name: Upload universal build artifact
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-mac-universal
-          path: dist/pucoti-mac-universal.zip
+          path: webapp/dist/pucoti-mac-universal.zip
           retention-days: 30
 
       - name: Upload individual .app bundles
@@ -81,8 +81,8 @@ jobs:
         with:
           name: pucoti-app-bundles
           path: |
-            dist/mac_x64/pucoti.app
-            dist/mac_arm64/pucoti.app
-            dist/mac_universal/pucoti.app
+            webapp/dist/mac_x64/pucoti.app
+            webapp/dist/mac_arm64/pucoti.app
+            webapp/dist/mac_universal/pucoti.app
           retention-days: 30
 # This is a new workflow
