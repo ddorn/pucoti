@@ -228,17 +228,19 @@ jobs:
         with:
           path: artifacts
 
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release-files
+          # Move all release files to a flat directory
+          find artifacts/ -name "*.tar.gz" -exec cp {} release-files/ \;
+          find artifacts/ -name "*.AppImage" -exec cp {} release-files/ \;
+          find artifacts/ -name "*.zip" -exec cp {} release-files/ \;
+          ls -la release-files/
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            artifacts/pucoti-linux-builds/pucoti-linux-x64.tar.gz
-            artifacts/pucoti-linux-builds/pucoti-linux-x64.AppImage
-            artifacts/pucoti-windows-builds/pucoti-windows-x64.zip
-            artifacts/pucoti-windows-builds/pucoti-windows-x64-portable.zip
-            artifacts/pucoti-mac-builds/pucoti-mac-x64.zip
-            artifacts/pucoti-mac-builds/pucoti-mac-arm64.zip
-            artifacts/pucoti-mac-builds/pucoti-mac-universal.zip
+          files: release-files/*
           draft: false
           prerelease: false
         env:
