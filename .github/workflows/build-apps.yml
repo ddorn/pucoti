@@ -183,9 +183,9 @@ jobs:
             fi
           fi
 
-      # Upload artifacts for workflow runs (non-tag)
+      # Upload artifacts for all workflow runs
       - name: Upload Linux artifacts
-        if: matrix.platform == 'linux' && !startsWith(github.ref, 'refs/tags/')
+        if: matrix.platform == 'linux'
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-linux-builds
@@ -196,7 +196,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Windows artifacts
-        if: matrix.platform == 'win' && !startsWith(github.ref, 'refs/tags/')
+        if: matrix.platform == 'win'
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-windows-builds
@@ -207,7 +207,7 @@ jobs:
           retention-days: 30
 
       - name: Upload macOS artifacts
-        if: matrix.platform == 'mac' && !startsWith(github.ref, 'refs/tags/')
+        if: matrix.platform == 'mac'
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-mac-builds
