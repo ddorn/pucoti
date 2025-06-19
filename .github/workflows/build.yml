@@ -46,7 +46,7 @@ jobs:
         run: pnpm install --dir www
 
       - name: Build Vue App (www)
-        run: pnpm run build-only --dir www
+        run: pnpm run --dir www build-only
 
       - name: Build Neutralino App
         run: pnpm exec neu build
