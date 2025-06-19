@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-:root {
+@theme {
   --font-sans: 'Inter', sans-serif;
   --font-display: 'Bevan', sans-serif;
   --color-light: oklch(0.9 0.1 88);
