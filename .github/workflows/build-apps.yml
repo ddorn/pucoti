@@ -146,6 +146,81 @@ jobs:
             ARCH=x86_64 ../appimage-tools/appimagetool-x86_64.AppImage appimage-x64 pucoti-linux-x64.AppImage
           fi
 
+      - name: Create macOS installation guides
+        if: matrix.platform == 'mac'
+        run: |
+          cd dist
+          
+          # Create installation guide for each macOS build
+          for dir in mac_x64 mac_arm64 mac_universal; do
+            if [ -d "$dir" ]; then
+              cat > "$dir/INSTALLATION_GUIDE.md" << 'EOF'
+          # Pucoti macOS Installation Guide
+
+          ## ⚠️ Important Security Note
+
+          This application is currently **unsigned**, which means macOS will prevent it from running by default. This is normal for independently distributed applications and doesn't indicate any security risk with Pucoti itself.
+
+          ## Installation Steps
+
+          ### Step 1: Extract the Application
+          1. Download and extract the zip file
+          2. Move `pucoti.app` to your Applications folder (optional but recommended)
+
+          ### Step 2: Remove macOS Quarantine
+          Since this app is unsigned, macOS will quarantine it. You need to remove the quarantine flag:
+
+          1. **Open Terminal** (found in Applications > Utilities)
+          2. **Run the following command** (replace the path if you put the app elsewhere):
+             ```bash
+             xattr -cr /Applications/pucoti.app
+             ```
+             Or if you kept it in Downloads:
+             ```bash
+             xattr -cr ~/Downloads/pucoti.app
+             ```
+
+          ### Step 3: Launch the Application
+          1. **Right-click** on `pucoti.app` and select **"Open"**
+          2. macOS will show a security dialog - click **"Open"** to confirm
+          3. The app should now launch normally
+
+          ## Alternative Method (System Preferences)
+          If the above doesn't work:
+          1. Try to launch the app normally (it will be blocked)
+          2. Go to **System Preferences** > **Security & Privacy** > **General**
+          3. You'll see a message about `pucoti` being blocked
+          4. Click **"Open Anyway"**
+
+          ## Why is this necessary?
+
+          - **Code Signing**: Apple requires applications to be digitally signed by registered developers
+          - **Notarization**: Apple also requires apps to be notarized (scanned by Apple's servers)
+          - **Cost & Complexity**: These processes require paid Apple Developer accounts and additional infrastructure
+          - **Open Source**: Many open source projects distribute unsigned applications this way
+
+          ## Is it safe?
+
+          Yes! The unsigned status doesn't mean the application is unsafe:
+          - The source code is publicly available and auditable
+          - You can verify the build process in our GitHub Actions
+          - The warning is purely about the lack of Apple's digital signature, not about malware
+
+          ## Need Help?
+
+          If you encounter issues:
+          1. Check our GitHub Issues page
+          2. Make sure you've followed all steps above
+          3. Try running the Terminal command again
+          4. Restart your Mac and try again
+
+          ## Future Plans
+
+          We're working on implementing proper code signing and notarization to make installation smoother in future releases.
+          EOF
+            fi
+          done
+
       - name: Create release archives
         run: |
           cd dist
@@ -173,13 +248,22 @@ jobs:
           # macOS archives
           if [ "${{ matrix.platform }}" = "mac" ]; then
             if [ -d "mac_x64" ]; then
-              zip -r pucoti-mac-x64.zip mac_x64/
+              # Ensure INSTALLATION_GUIDE.md is at the root of the archive for visibility
+              cp mac_x64/INSTALLATION_GUIDE.md ./INSTALLATION_GUIDE.md 2>/dev/null || true
+              zip -r pucoti-mac-x64.zip mac_x64/ INSTALLATION_GUIDE.md
+              rm -f ./INSTALLATION_GUIDE.md
             fi
             if [ -d "mac_arm64" ]; then
-              zip -r pucoti-mac-arm64.zip mac_arm64/
+              # Ensure INSTALLATION_GUIDE.md is at the root of the archive for visibility
+              cp mac_arm64/INSTALLATION_GUIDE.md ./INSTALLATION_GUIDE.md 2>/dev/null || true
+              zip -r pucoti-mac-arm64.zip mac_arm64/ INSTALLATION_GUIDE.md
+              rm -f ./INSTALLATION_GUIDE.md
             fi
             if [ -d "mac_universal" ]; then
-              zip -r pucoti-mac-universal.zip mac_universal/
+              # Ensure INSTALLATION_GUIDE.md is at the root of the archive for visibility
+              cp mac_universal/INSTALLATION_GUIDE.md ./INSTALLATION_GUIDE.md 2>/dev/null || true
+              zip -r pucoti-mac-universal.zip mac_universal/ INSTALLATION_GUIDE.md
+              rm -f ./INSTALLATION_GUIDE.md
             fi
           fi
 
@@ -214,6 +298,7 @@ jobs:
           path: |
             webapp/dist/pucoti-mac-*.zip
             webapp/dist/mac_*/
+            webapp/dist/mac_*/INSTALLATION_GUIDE.md
           retention-days: 30
 
   release:
