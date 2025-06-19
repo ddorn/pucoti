@@ -1,0 +1,38 @@
+{
+  "applicationId": "js.neutralino.zero",
+  "version": "1.0.0",
+  "defaultMode": "window",
+  "documentRoot": "/www/dist/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "nativeAllowList": ["app.*"],
+  "modes": {
+    "window": {
+      "title": "Pucoti",
+      "width": 800,
+      "height": 500,
+      "minWidth": 400,
+      "minHeight": 200,
+      "icon": "/www/dist/favicon.ico"
+    }
+  },
+  "cli": {
+    "binaryName": "pucoti",
+    "resourcesPath": "/www/dist/",
+    "extensionsPath": "/extensions/",
+    "clientLibrary": "/www/public/neutralino.js",
+    "binaryVersion": "6.1.0",
+    "clientVersion": "6.1.0"
+  },
+"buildScript": {
+  "mac": {
+    "architecture": ["x64", "arm64", "universal"],
+    "minimumOS": "10.13.0",
+    "appName": "pucoti",
+    "appBundleName": "pucoti",
+    "appIdentifier": "com.pucoti.app",
+    "appIcon":  "./packaging/pucoti.icns"
+  }
+}
+}

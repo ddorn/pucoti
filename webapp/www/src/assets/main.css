@@ -1,0 +1,32 @@
+@import 'tailwindcss/preflight.css' layer(base);
+
+:root {
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Bevan', sans-serif;
+  --color-light: oklch(0.9 0.1 88);
+
+  --color-dark: oklch(0.15 0.025 45);
+  /* Darker is actually less dark. You're welcome. */
+  --color-darker: oklch(0.2 0.025 45);
+  --color-acid: rgb(183, 255, 183);
+
+  --timer-negative: #f00;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-size: clamp(1rem, 1.5vw, 1.5rem);
+  font-family: var(--font-sans);
+  background-color: var(--color-light);
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}

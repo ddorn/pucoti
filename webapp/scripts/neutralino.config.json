@@ -1,0 +1,70 @@
+{
+  "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
+  "applicationId": "js.neutralino.zero",
+  "version": "1.0.0",
+  "defaultMode": "window",
+  "port": 0,
+  "documentRoot": "/www/dist/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "enableExtensions": false,
+  "exportAuthInfo": true,
+  "tokenSecurity": "one-time",
+  "nativeAllowList": ["app.*"],
+  "logging": {
+    "enabled": false,
+    "writeToLogFile": false
+  },
+  "globalVariables": {},
+  "modes": {
+    "window": {
+      "title": "myapp",
+      "width": 800,
+      "height": 500,
+      "minWidth": 400,
+      "minHeight": 200,
+      "fullScreen": false,
+      "alwaysOnTop": false,
+      "icon": "/www/dist/favicon.ico",
+      "enableInspector": true,
+      "borderless": false,
+      "maximize": false,
+      "hidden": false,
+      "center": true,
+      "useSavedState": false,
+      "resizable": true,
+      "exitProcessOnClose": false
+    }
+  },
+  "cli": {
+    "binaryName": "myapp",
+    "resourcesPath": "/www/dist/",
+    "extensionsPath": "/extensions/",
+    "clientLibrary": "/www/public/neutralino.js",
+    "binaryVersion": "6.1.0",
+    "clientVersion": "6.1.0"
+  },
+  "buildScript": {
+    "mac": {
+      "architecture": ["x64", "arm64", "universal"],
+      "minimumOS": "10.13.0",
+      "appName": "myapp",
+      "appBundleName": "myapp",
+      "appIdentifier": "com.marketmix.ext.bun.demo",
+      "appIcon": "../packaging/pucoti.icns"
+    },
+    "win": {
+      "architecture": ["x64"],
+      "appName": "myapp",
+      "appIcon": "icon.ico"
+    },
+    "linux": {
+      "architecture": ["x64", "arm64", "armhf"],
+      "appName": "myapp",
+      "appIcon": "icon.png",
+      "appPath": "/usr/share/myapp",
+      "appIconPath": "/usr/share/myapp/icon.png"
+    }
+  }
+}
