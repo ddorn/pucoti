@@ -1,4 +1,4 @@
-name: Build and Release Webapp
+name: Build and Release Pucoti
 
 on:
   push:
@@ -9,13 +9,22 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_and_package:
+  build:
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: macos-latest
+            platform: mac
+            arch: x64
+          - os: macos-14
+            platform: mac
+            arch: arm64
 
     defaults:
       run:
@@ -30,14 +39,20 @@ jobs:
         with:
           version: 8
 
-      - name: Install OS dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+          cache-dependency-path: webapp/www/pnpm-lock.yaml
+
+      - name: Install system dependencies
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo apt-get update
-            sudo apt-get install -y jq libfuse2
-          elif [ "${{ runner.os }}" = "Windows" ]; then
-            winget install -e --id jqlang.jq
-            echo "C:\Program Files\jq" >> $GITHUB_PATH
+            sudo apt-get install -y jq libfuse2 file
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            brew install jq
           fi
 
       - name: Install frontend dependencies
@@ -45,140 +60,322 @@ jobs:
           cd www
           pnpm install
 
-      - name: Build Neutralino App
+      - name: Build frontend
+        run: |
+          cd www
+          pnpm run build
+
+      - name: Configure build for current architecture
+        run: |
+          if [ "${{ matrix.platform }}" = "mac" ]; then
+            jq ".buildScript.mac.architecture = [\"${{ matrix.arch }}\"]" neutralino.config.json > temp.json
+            mv temp.json neutralino.config.json
+          elif [ "${{ matrix.platform }}" = "linux" ]; then
+            jq ".buildScript.linux.architecture = [\"${{ matrix.arch }}\"]" neutralino.config.json > temp.json
+            mv temp.json neutralino.config.json
+          fi
+
+      - name: Build Neutralino app
         run: pnpx @neutralinojs/neu build --release
 
-      - name: Package Linux Build
-        if: runner.os == 'Linux'
-        id: package-linux
+      - name: Package Linux build
+        if: matrix.platform == 'linux'
         run: |
-          CONF=./neutralino.config.json
-          APP_NAME=$(jq -r '.buildScript.linux.appName' $CONF)
-          APP_BINARY=$(jq -r '.cli.binaryName' $CONF)
-          APP_VERSION=$(jq -r '.version' $CONF)
-          APP_ICON=$(jq -r '.buildScript.linux.appIcon' $CONF)
+          # Read config values
+          APP_NAME=$(jq -r '.buildScript.linux.appName' neutralino.config.json)
+          APP_BINARY=$(jq -r '.cli.binaryName' neutralino.config.json)
+          APP_VERSION=$(jq -r '.version' neutralino.config.json)
+          APP_ICON=$(jq -r '.buildScript.linux.appIcon' neutralino.config.json)
 
-          BUILD_DIR="./dist/linux_x64/${APP_NAME}"
-          EXE_SRC="./dist/${APP_BINARY}/${APP_BINARY}-linux_x64"
-          RES_SRC="./dist/${APP_BINARY}/resources.neu"
-          EXT_SRC="./dist/${APP_BINARY}/extensions"
-          SCAFFOLD_DESKTOP="./packaging/app_scaffolds/linux/myapp.desktop"
-
+          # Create build directory
+          BUILD_DIR="./dist/linux_${{ matrix.arch }}/${APP_NAME}"
           mkdir -p "${BUILD_DIR}"
-          cp "${EXE_SRC}" "${BUILD_DIR}/"
-          cp "${RES_SRC}" "${BUILD_DIR}/"
-          ICON_FILENAME=$(basename ${APP_ICON})
-          ICON_NAME=${ICON_FILENAME%.*}
-          # Copy icon to AppDir root for AppImage standard
-          cp "${APP_ICON}" "${BUILD_DIR}/${ICON_FILENAME}"
-          # Also copy with standard name for AppImage
-          cp "${APP_ICON}" "${BUILD_DIR}/${APP_NAME}.png"
-          cp "${SCAFFOLD_DESKTOP}" "${BUILD_DIR}/${APP_NAME}.desktop"
-          if [ -d "${EXT_SRC}" ]; then cp -r "${EXT_SRC}" "${BUILD_DIR}/"; fi
 
-          sed -i "s/{APP_NAME}/${APP_NAME}/g" "${BUILD_DIR}/${APP_NAME}.desktop"
-          sed -i "s|{APP_ICON_LOCATION}|${APP_NAME}|g" "${BUILD_DIR}/${APP_NAME}.desktop"
-          sed -i "s|{APP_EXEC}|./${APP_BINARY}-linux_x64|g" "${BUILD_DIR}/${APP_NAME}.desktop"
+          # Copy binary and resources
+          cp "./dist/${APP_BINARY}/${APP_BINARY}-linux_${{ matrix.arch }}" "${BUILD_DIR}/"
+          cp "./dist/${APP_BINARY}/resources.neu" "${BUILD_DIR}/"
 
-          echo "#!/bin/sh" > "${BUILD_DIR}/AppRun"
-          echo "HERE=\$(dirname \"\$(readlink -f \"\${0}\")\")" >> "${BUILD_DIR}/AppRun"
-          echo "cd \"\${HERE}\" && ./${APP_BINARY}-linux_x64 \"\$@\"" >> "${BUILD_DIR}/AppRun"
-          chmod +x "${BUILD_DIR}/AppRun"
+          # Copy extensions if they exist
+          if [ -d "./dist/${APP_BINARY}/extensions" ]; then
+            cp -r "./dist/${APP_BINARY}/extensions" "${BUILD_DIR}/"
+          fi
 
-          wget -q "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage" -O ./appimagetool
-          chmod +x ./appimagetool
+          # Copy icon
+          echo "Looking for icon at: ${APP_ICON}"
+          if [ -f "${APP_ICON}" ]; then
+            echo "Icon found, copying to build directory"
+            cp "${APP_ICON}" "${BUILD_DIR}/"
+          else
+            echo "Warning: Icon file ${APP_ICON} not found"
+            ls -la packaging/icons/ || echo "packaging/icons/ directory not found"
+          fi
 
-          FINAL_APPIMAGE_NAME="${APP_NAME}-${APP_VERSION}-linux-x64"
-          ARCH=x86_64 ./appimagetool --no-appstream "${BUILD_DIR}" "./dist/${FINAL_APPIMAGE_NAME}.AppImage"
-          echo "artifact-name=${FINAL_APPIMAGE_NAME}" >> $GITHUB_OUTPUT
+          # Create desktop file
+          cat > "${BUILD_DIR}/${APP_NAME}.desktop" << EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=${APP_NAME}
+Icon=${APP_NAME}
+Exec=${APP_BINARY}-linux_${{ matrix.arch }}
+Categories=Utility;
+EOF
 
-      - name: Package macOS Build
-        if: runner.os == 'macOS'
-        id: package-macos
+          # Create AppImage structure
+          APPDIR="${APP_NAME}.AppDir"
+          rm -rf "${APPDIR}"
+          mkdir -p "${APPDIR}/usr/bin"
+          mkdir -p "${APPDIR}/usr/share/applications"
+          mkdir -p "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
+
+          # Copy files to AppDir
+          cp "${BUILD_DIR}/${APP_BINARY}-linux_${{ matrix.arch }}" "${APPDIR}/usr/bin/"
+          cp "${BUILD_DIR}/resources.neu" "${APPDIR}/usr/bin/"
+
+          if [ -d "${BUILD_DIR}/extensions" ]; then
+            cp -r "${BUILD_DIR}/extensions" "${APPDIR}/usr/bin/"
+          fi
+
+          # Create clean desktop file for AppImage (without problematic keys)
+          cat > "${APPDIR}/${APP_NAME}.desktop" << EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=${APP_NAME}
+Icon=${APP_NAME}
+Exec=${APP_BINARY}-linux_${{ matrix.arch }}
+Categories=Utility;
+EOF
+
+          cp "${APPDIR}/${APP_NAME}.desktop" "${APPDIR}/usr/share/applications/"
+
+          if [ -f "${APP_ICON}" ]; then
+            echo "Copying icon to AppDir"
+            cp "${APP_ICON}" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${APP_NAME}.png"
+            cp "${APP_ICON}" "${APPDIR}/${APP_NAME}.png"
+          elif [ -f "${BUILD_DIR}/$(basename ${APP_ICON})" ]; then
+            echo "Using icon from build directory"
+            cp "${BUILD_DIR}/$(basename ${APP_ICON})" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${APP_NAME}.png"
+            cp "${BUILD_DIR}/$(basename ${APP_ICON})" "${APPDIR}/${APP_NAME}.png"
+          else
+            echo "Warning: No icon found, creating placeholder"
+            # Create a simple placeholder PNG
+            echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" | base64 -d > "${APPDIR}/${APP_NAME}.png"
+            cp "${APPDIR}/${APP_NAME}.png" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${APP_NAME}.png"
+          fi
+
+          # Create AppRun script
+          cat > "${APPDIR}/AppRun" << EOF
+#!/bin/bash
+HERE="\$(dirname "\$(readlink -f "\${0}")")"
+export PATH="\${HERE}/usr/bin:\${PATH}"
+cd "\${HERE}/usr/bin"
+exec "./${APP_BINARY}-linux_${{ matrix.arch }}" "\$@"
+EOF
+          chmod +x "${APPDIR}/AppRun"
+
+          # Debug: List AppDir contents before creating AppImage
+          echo "AppDir contents:"
+          find "${APPDIR}" -type f -ls
+
+          # Create AppImage
+          if [ "${{ matrix.arch }}" = "x64" ]; then
+            wget -q "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage" -O appimagetool
+            chmod +x appimagetool
+            ARCH=x86_64 ./appimagetool --no-appstream "${APPDIR}" "dist/${APP_NAME}-${APP_VERSION}-linux-${{ matrix.arch }}.AppImage"
+          else
+            echo "AppImage creation skipped for ${{ matrix.arch }} architecture"
+          fi
+
+      - name: Package macOS build
+        if: matrix.platform == 'mac'
         run: |
-          CONF=./neutralino.config.json
-          APP_NAME=$(jq -r '.buildScript.mac.appName' $CONF)
-          APP_VERSION=$(jq -r '.version' $CONF)
-          APP_BINARY=$(jq -r '.cli.binaryName' $CONF)
-          APP_ID=$(jq -r '.buildScript.mac.appIdentifier' $CONF)
-          APP_ICON=$(jq -r '.buildScript.mac.appIcon' $CONF)
-          APP_MIN_OS=$(jq -r '.buildScript.mac.minimumOS' $CONF)
-          APP_BUNDLE_NAME=$(jq -r '.buildScript.mac.appBundleName' $CONF)
+          # Read config values
+          APP_NAME=$(jq -r '.buildScript.mac.appName' neutralino.config.json)
+          APP_VERSION=$(jq -r '.version' neutralino.config.json)
+          APP_BINARY=$(jq -r '.cli.binaryName' neutralino.config.json)
+          APP_ID=$(jq -r '.buildScript.mac.appIdentifier' neutralino.config.json)
+          APP_ICON=$(jq -r '.buildScript.mac.appIcon' neutralino.config.json)
+          APP_MIN_OS=$(jq -r '.buildScript.mac.minimumOS' neutralino.config.json)
+          APP_BUNDLE_NAME=$(jq -r '.buildScript.mac.appBundleName' neutralino.config.json)
 
-          APP_BUNDLE_DIR="./dist/mac_x64/${APP_NAME}.app"
+          # Create app bundle structure
+          APP_BUNDLE_DIR="./dist/mac_${{ matrix.arch }}/${APP_NAME}.app"
           MACOS_DIR="${APP_BUNDLE_DIR}/Contents/MacOS"
           RESOURCES_DIR="${APP_BUNDLE_DIR}/Contents/Resources"
-          EXE_SRC="./dist/${APP_BINARY}/${APP_BINARY}-mac_x64"
-          RES_SRC="./dist/${APP_BINARY}/resources.neu"
-          EXT_SRC="./dist/${APP_BINARY}/extensions"
-          INFO_PLIST_SCAFFOLD="./packaging/app_scaffolds/mac/myapp.app/Contents/Info.plist"
 
           mkdir -p "${MACOS_DIR}"
           mkdir -p "${RESOURCES_DIR}"
 
-          cp "${EXE_SRC}" "${MACOS_DIR}/main"
+          # Copy binary and resources
+          cp "./dist/${APP_BINARY}/${APP_BINARY}-mac_${{ matrix.arch }}" "${MACOS_DIR}/main"
           chmod +x "${MACOS_DIR}/main"
-          cp "${RES_SRC}" "${RESOURCES_DIR}/"
-          cp "${APP_ICON}" "${RESOURCES_DIR}/"
-          cp "${INFO_PLIST_SCAFFOLD}" "${APP_BUNDLE_DIR}/Contents/Info.plist"
-          if [ -d "${EXT_SRC}" ]; then cp -r "${EXT_SRC}" "${RESOURCES_DIR}/"; fi
+          cp "./dist/${APP_BINARY}/resources.neu" "${RESOURCES_DIR}/"
 
-          sed -i '' "s/{APP_NAME}/${APP_NAME}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
-          sed -i '' "s/{APP_ID}/${APP_ID}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
-          sed -i '' "s/{APP_VERSION}/${APP_VERSION}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
-          sed -i '' "s/{APP_BUNDLE}/${APP_BUNDLE_NAME}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
-          sed -i '' "s/{APP_MIN_OS}/${APP_MIN_OS}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
+          # Copy extensions if they exist
+          if [ -d "./dist/${APP_BINARY}/extensions" ]; then
+            cp -r "./dist/${APP_BINARY}/extensions" "${RESOURCES_DIR}/"
+          fi
 
-          FINAL_ZIP_NAME="${APP_NAME}-${APP_VERSION}-macOS-x64"
-          cd "./dist/mac_x64"
-          # Use ditto to create a proper macOS zip that preserves resource forks and permissions
-          ditto -c -k --sequesterRsrc --keepParent "./${APP_NAME}.app" "../${FINAL_ZIP_NAME}.zip"
-          echo "artifact-name=${FINAL_ZIP_NAME}" >> $GITHUB_OUTPUT
+          # Copy icon
+          if [ -f "${APP_ICON}" ]; then
+            cp "${APP_ICON}" "${RESOURCES_DIR}/icon.icns"
+          else
+            echo "Warning: Icon file ${APP_ICON} not found"
+          fi
 
-      - name: Package Windows Build
-        if: runner.os == 'Windows'
-        id: package-windows
+          # Create bootstrap script
+          cat > "${MACOS_DIR}/bootstrap" << 'EOF'
+#!/usr/bin/env bash
+MACOS="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+CONTENTS="$(dirname "$MACOS")"
+exec "${MACOS}/main" --path="${CONTENTS}/Resources" --enable-extensions=true
+EOF
+          chmod +x "${MACOS_DIR}/bootstrap"
+
+          # Create Info.plist
+          cat > "${APP_BUNDLE_DIR}/Contents/Info.plist" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>CFBundleExecutable</key>
+    <string>bootstrap</string>
+    <key>CFBundleGetInfoString</key>
+    <string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key>
+    <string>icon.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>${APP_ID}</string>
+    <key>CFBundleName</key>
+    <string>${APP_BUNDLE_NAME}</string>
+    <key>CFBundleShortVersionString</key>
+    <string>${APP_VERSION}</string>
+    <key>CFBundleGetInfoString</key>
+    <string>${APP_NAME} ${APP_VERSION}</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>${APP_MIN_OS}</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+</dict>
+</plist>
+EOF
+
+          # Clear extended attributes and fix permissions
+          find "${APP_BUNDLE_DIR}" -type f -exec chmod 644 {} \;
+          find "${APP_BUNDLE_DIR}" -type d -exec chmod 755 {} \;
+          chmod +x "${MACOS_DIR}/bootstrap"
+          chmod +x "${MACOS_DIR}/main"
+
+          # Remove quarantine attributes that might cause Gatekeeper issues
+          xattr -cr "${APP_BUNDLE_DIR}" 2>/dev/null || true
+
+          # Ad-hoc code sign the app to prevent Gatekeeper issues
+          echo "Code signing the app bundle..."
+          codesign --force --deep --sign - "${APP_BUNDLE_DIR}" || echo "Code signing failed, continuing anyway"
+
+          # Verify the app structure
+          echo "App bundle structure:"
+          find "${APP_BUNDLE_DIR}" -type f -exec ls -la {} \;
+
+          # Create zip archive (preserve permissions and avoid extra attributes)
+          cd "./dist/mac_${{ matrix.arch }}"
+
+          # Create zip without extended attributes
+          export COPYFILE_DISABLE=1
+          zip -r -X "../${APP_NAME}-${APP_VERSION}-macOS-${{ matrix.arch }}.zip" "${APP_NAME}.app"
+
+          echo "Created macOS package: ${APP_NAME}-${APP_VERSION}-macOS-${{ matrix.arch }}.zip"
+
+          # Create user instructions
+          cat > "../MACOS_INSTALL_INSTRUCTIONS.txt" << 'EOF'
+          PUCOTI - macOS Installation Instructions
+          ========================================
+
+          If you get a "damaged or incomplete" error when opening the app:
+
+          Method 1 (Recommended):
+          1. Right-click on the Pucoti.app and select "Open"
+          2. Click "Open" in the security dialog
+          
+          Method 2 (Command Line):
+          1. Open Terminal
+          2. Run: sudo xattr -rd com.apple.quarantine /path/to/Pucoti.app
+          3. Replace /path/to/Pucoti.app with the actual path
+          
+          Method 3 (System Preferences):
+          1. Go to System Preferences > Security & Privacy > General
+          2. Click "Open Anyway" after the first attempt to open the app
+          
+          This happens because the app is not notarized by Apple.
+          The app is safe to run - it's built from open source code.
+          EOF
+
+      - name: Upload Linux artifacts
+        if: matrix.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pucoti-linux-${{ matrix.arch }}
+          path: |
+            webapp/dist/*.AppImage
+          retention-days: 30
+
+      - name: Upload macOS artifacts
+        if: matrix.platform == 'mac'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pucoti-macos-${{ matrix.arch }}
+          path: |
+            webapp/dist/*.zip
+          retention-days: 30
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -la artifacts/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Pucoti v${{ github.run_number }}
+          draft: false
+          prerelease: true
+
+      - name: Upload Release Assets
         run: |
-          $CONF="./neutralino.config.json"
-          $APP_NAME_EXE = $(jq -r '.buildScript.win.appName' $CONF)
-          $APP_NAME = $APP_NAME_EXE.Replace(".exe", "")
-          $APP_VERSION = $(jq -r '.version' $CONF)
-          $APP_BINARY = $(jq -r '.cli.binaryName' $CONF)
-          $APP_ICON = $(jq -r '.buildScript.win.appIcon' $CONF)
-
-          $BUILD_DIR = "./dist/win_x64"
-          $EXE_SRC = "./dist/${APP_BINARY}/${APP_BINARY}-win_x64.exe"
-          $RES_SRC = "./dist/${APP_BINARY}/resources.neu"
-          $EXT_SRC = "./dist/${APP_BINARY}/extensions"
-
-          mkdir -p $BUILD_DIR
-          cp "${EXE_SRC}" "${BUILD_DIR}/${APP_NAME_EXE}"
-          cp "${RES_SRC}" "${BUILD_DIR}/"
-          cp "${APP_ICON}" "${BUILD_DIR}/"
-          if (Test-Path -Path $EXT_SRC) { cp -r "${EXT_SRC}" "${BUILD_DIR}/" }
-
-          $FINAL_ZIP_NAME = "${APP_NAME}-${APP_VERSION}-windows-x64"
-          7z a -tzip "dist/${FINAL_ZIP_NAME}.zip" "./${BUILD_DIR}/*"
-          echo "artifact-name=${FINAL_ZIP_NAME}" >> $env:GITHUB_OUTPUT
-        shell: pwsh
-
-      - name: Upload Linux Build Artifact
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.package-linux.outputs.artifact-name }}
-          path: webapp/dist/*.AppImage
-
-      - name: Upload macOS Build Artifact
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.package-macos.outputs.artifact-name }}
-          path: webapp/dist/*.zip
-
-      - name: Upload Windows Build Artifact
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.package-windows.outputs.artifact-name }}
-          path: webapp/dist/*.zip
+          for dir in artifacts/*/; do
+            for file in "$dir"*; do
+              if [ -f "$file" ]; then
+                echo "Uploading $file"
+                curl \
+                  -X POST \
+                  -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                  -H "Content-Type: application/octet-stream" \
+                  --data-binary @"$file" \
+                  "${{ steps.create_release.outputs.upload_url }}?name=$(basename "$file")"
+              fi
+            done
+          done
