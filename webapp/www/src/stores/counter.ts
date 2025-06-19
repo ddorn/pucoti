@@ -15,7 +15,7 @@ export const usePucotiStore = defineStore('pucoti', {
       pucotiStart: now,
       lastRung: 0,
       ringEvery: '20s', // seconds
-      secondaryTimers: ['total', 'onIntention'],
+      secondaryTimers: ['onIntention'],
       commands: [
         {
           at: '0m',

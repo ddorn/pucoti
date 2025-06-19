@@ -9,6 +9,7 @@ import { RouterLink } from 'vue-router'
 import router from '@/router'
 import { humanTimeToMs, MINUTE } from '@/utils'
 import { useListenerFn } from '@/lib'
+import TimersList from '@/components/TimersList.vue'
 
 const store = usePucotiStore()
 
@@ -180,6 +181,7 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
         <Button label="Enter room" shortcut="E" outline />
       </div>
       <div class="below">
+        <TimersList />
         <IntentionHistory />
       </div>
     </div>
