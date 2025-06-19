@@ -35,21 +35,22 @@ jobs:
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo apt-get update
             sudo apt-get install -y jq libfuse2
-          elif [ "${{ runner.os }}" = "macOS" ]; then
-            brew install jq
           elif [ "${{ runner.os }}" = "Windows" ]; then
             winget install -e --id jqlang.jq
             echo "C:\Program Files\jq" >> $GITHUB_PATH
           fi
 
       - name: Install dependencies
-        run: pnpm install --dir www
+        run: pnpm install
+        working-directory: www
 
       - name: Build Vue App (www)
-        run: pnpm run --dir www build-only
+        run: pnpm run build-only
+        working-directory: www
 
       - name: Build Neutralino App
         run: pnpm exec neu build
+        working-directory: www
 
       - name: Package Linux Build
         if: runner.os == 'Linux'
