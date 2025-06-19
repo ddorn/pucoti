@@ -48,7 +48,6 @@ jobs:
             winget install -e --id jqlang.jq
             echo "C:\Program Files\jq" >> $GITHUB_PATH
           fi
-        shell: bash
 
       - name: Install dependencies
         run: pnpm install --dir www
