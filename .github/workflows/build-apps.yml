@@ -6,13 +6,13 @@ on:
     paths:
       - 'webapp/**'
       - '.github/workflows/build-apps.yml'
+    tags:
+      - 'v*'
   pull_request:
     branches: [main]
     paths:
       - 'webapp/**'
       - '.github/workflows/build-apps.yml'
-  release:
-    types: [created]
   workflow_dispatch:
 
 jobs:
@@ -183,9 +183,9 @@ jobs:
             fi
           fi
 
-      # Upload artifacts for workflow runs (non-release)
+      # Upload artifacts for workflow runs (non-tag)
       - name: Upload Linux artifacts
-        if: matrix.platform == 'linux' && github.event_name != 'release'
+        if: matrix.platform == 'linux' && !startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-linux-builds
@@ -196,7 +196,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Windows artifacts
-        if: matrix.platform == 'win' && github.event_name != 'release'
+        if: matrix.platform == 'win' && !startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-windows-builds
@@ -207,7 +207,7 @@ jobs:
           retention-days: 30
 
       - name: Upload macOS artifacts
-        if: matrix.platform == 'mac' && github.event_name != 'release'
+        if: matrix.platform == 'mac' && !startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: pucoti-mac-builds
@@ -216,80 +216,30 @@ jobs:
             webapp/dist/mac_*/
           retention-days: 30
 
-      # Upload to release assets when triggered by release
-      - name: Upload Linux release assets
-        if: matrix.platform == 'linux' && github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: webapp/dist/pucoti-linux-x64.tar.gz
-          asset_name: pucoti-linux-x64.tar.gz
-          asset_content_type: application/gzip
+          path: artifacts
 
-      - name: Upload Linux AppImage release asset
-        if: matrix.platform == 'linux' && github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/pucoti-linux-builds/pucoti-linux-x64.tar.gz
+            artifacts/pucoti-linux-builds/pucoti-linux-x64.AppImage
+            artifacts/pucoti-windows-builds/pucoti-windows-x64.zip
+            artifacts/pucoti-windows-builds/pucoti-windows-x64-portable.zip
+            artifacts/pucoti-mac-builds/pucoti-mac-x64.zip
+            artifacts/pucoti-mac-builds/pucoti-mac-arm64.zip
+            artifacts/pucoti-mac-builds/pucoti-mac-universal.zip
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: webapp/dist/pucoti-linux-x64.AppImage
-          asset_name: pucoti-linux-x64.AppImage
-          asset_content_type: application/octet-stream
-
-      - name: Upload Windows release assets
-        if: matrix.platform == 'win' && github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: webapp/dist/pucoti-windows-x64.zip
-          asset_name: pucoti-windows-x64.zip
-          asset_content_type: application/zip
-
-      - name: Upload Windows portable release asset
-        if: matrix.platform == 'win' && github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: webapp/dist/pucoti-windows-x64-portable.zip
-          asset_name: pucoti-windows-x64-portable.zip
-          asset_content_type: application/zip
-
-      - name: Upload macOS x64 release asset
-        if: matrix.platform == 'mac' && github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: webapp/dist/pucoti-mac-x64.zip
-          asset_name: pucoti-mac-x64.zip
-          asset_content_type: application/zip
-
-      - name: Upload macOS arm64 release asset
-        if: matrix.platform == 'mac' && github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: webapp/dist/pucoti-mac-arm64.zip
-          asset_name: pucoti-mac-arm64.zip
-          asset_content_type: application/zip
-
-      - name: Upload macOS universal release asset
-        if: matrix.platform == 'mac' && github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: webapp/dist/pucoti-mac-universal.zip
-          asset_name: pucoti-mac-universal.zip
-          asset_content_type: application/zip
