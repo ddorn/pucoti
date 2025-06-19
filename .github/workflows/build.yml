@@ -50,6 +50,7 @@ jobs:
 
       - name: Package Linux Build
         if: runner.os == 'Linux'
+        id: package-linux
         run: |
           CONF=./neutralino.config.json
           APP_NAME=$(jq -r '.buildScript.linux.appName' $CONF)
@@ -72,7 +73,7 @@ jobs:
 
           sed -i "s/{APP_NAME}/${APP_NAME}/g" "${BUILD_DIR}/${APP_NAME}.desktop"
           sed -i "s/{APP_ICON_LOCATION}/$(basename ${APP_ICON})/g" "${BUILD_DIR}/${APP_NAME}.desktop"
-          sed -i "s|{APP_EXEC}|/${APP_BINARY}-linux_x64|g" "${BUILD_DIR}/${APP_NAME}.desktop"
+          sed -i "s|{APP_EXEC}|./${APP_BINARY}-linux_x64|g" "${BUILD_DIR}/${APP_NAME}.desktop"
 
           echo "#!/bin/sh" > "${BUILD_DIR}/AppRun"
           echo "HERE=\$(dirname \"\$(readlink -f \"\${0}\")\")" >> "${BUILD_DIR}/AppRun"
@@ -82,11 +83,13 @@ jobs:
           wget -q "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage" -O ./appimagetool
           chmod +x ./appimagetool
 
-          FINAL_APPIMAGE_NAME="${APP_NAME}-${APP_VERSION}-linux-x64.AppImage"
-          ARCH=x86_64 ./appimagetool --no-appstream "${BUILD_DIR}" "./dist/${FINAL_APPIMAGE_NAME}"
+          FINAL_APPIMAGE_NAME="${APP_NAME}-${APP_VERSION}-linux-x64"
+          ARCH=x86_64 ./appimagetool --no-appstream "${BUILD_DIR}" "./dist/${FINAL_APPIMAGE_NAME}.AppImage"
+          echo "artifact-name=${FINAL_APPIMAGE_NAME}" >> $GITHUB_OUTPUT
 
       - name: Package macOS Build
         if: runner.os == 'macOS'
+        id: package-macos
         run: |
           CONF=./neutralino.config.json
           APP_NAME=$(jq -r '.buildScript.mac.appName' $CONF)
@@ -121,12 +124,14 @@ jobs:
           sed -i '' "s/{APP_BUNDLE}/${APP_BUNDLE_NAME}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
           sed -i '' "s/{APP_MIN_OS}/${APP_MIN_OS}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
 
-          FINAL_ZIP_NAME="${APP_NAME}-${APP_VERSION}-macOS-x64.zip"
-          cd "./dist/mac_x64"
-          zip -r "../${FINAL_ZIP_NAME}" "./${APP_NAME}.app"
+          # Move the .app bundle to the main dist directory for artifact upload
+          FINAL_APP_NAME="${APP_NAME}-${APP_VERSION}-macOS-x64"
+          mv "${APP_BUNDLE_DIR}" "./dist/${FINAL_APP_NAME}.app"
+          echo "artifact-name=${FINAL_APP_NAME}" >> $GITHUB_OUTPUT
 
       - name: Package Windows Build
         if: runner.os == 'Windows'
+        id: package-windows
         run: |
           $CONF="./neutralino.config.json"
           $APP_NAME_EXE = $(jq -r '.buildScript.win.appName' $CONF)
@@ -146,14 +151,28 @@ jobs:
           cp "${APP_ICON}" "${BUILD_DIR}/"
           if (Test-Path -Path $EXT_SRC) { cp -r "${EXT_SRC}" "${BUILD_DIR}/" }
 
-          $FINAL_ZIP_NAME = "${APP_NAME}-${APP_VERSION}-windows-x64.zip"
-          7z a -tzip "dist/${FINAL_ZIP_NAME}" "./${BUILD_DIR}/*"
+          $FINAL_ZIP_NAME = "${APP_NAME}-${APP_VERSION}-windows-x64"
+          7z a -tzip "dist/${FINAL_ZIP_NAME}.zip" "./${BUILD_DIR}/*"
+          echo "artifact-name=${FINAL_ZIP_NAME}" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
-      - name: Upload Build Artifacts
+      - name: Upload Linux Build Artifact
+        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: pucoti-build-${{ runner.os }}
-          path: |
-            webapp/dist/*.AppImage
-            webapp/dist/*.zip
+          name: ${{ steps.package-linux.outputs.artifact-name }}
+          path: webapp/dist/*.AppImage
+
+      - name: Upload macOS Build Artifact
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package-macos.outputs.artifact-name }}
+          path: webapp/dist/*.app
+
+      - name: Upload Windows Build Artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package-windows.outputs.artifact-name }}
+          path: webapp/dist/*.zip

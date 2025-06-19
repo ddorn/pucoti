@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, useTemplateRef, computed, onMounted, onUnmounted } from 'vue'
+import { ref, nextTick, useTemplateRef, computed } from 'vue'
 import Button from '@/components/Button.vue'
 import Timer from '@/components/Timer.vue'
 import IntentionHistory from '@/components/IntentionHistory.vue'
@@ -129,40 +129,42 @@ const timeOnPurpose = computed(() => {
 </script>
 
 <template>
-  <div v-if="isMiniView" class="mini-view bg-dark">
-    <div class="text-[1.8em] font-display text-acid" @click="startEditingIntention">
-      {{ store.intention || 'Enter your intention' }}
+  <div class="intention-container text-center">
+    <div
+      v-if="!isEditingIntention"
+      class="intention-display inline-block cursor-text bg-light/10 font-display text-acid"
+      @click="startEditingIntention"
+    >
+      {{ store.intention || 'Intention?' }}
     </div>
-    <div class="main-timer-container flex-grow">
-      <Timer :timer="store.timers.main" color="var(--color-light)" />
+    <input
+      v-else
+      id="intention"
+      ref="intention"
+      type="text"
+      :value="store.intention"
+      placeholder="Enter your intention"
+      class="intention-input inline-block border-none bg-light/10 text-center font-display text-acid outline-none placeholder:text-acid/40"
+      @keydown.stop="onIntentionInput"
+      @blur="stopEditingIntention"
+    />
+  </div>
+  <div class="mobile-timer">
+    <div class="text-center">
+      <Timer
+        class="leading-none"
+        size="clamp(15vw, 15vw, 80vw)"
+        :timer="store.timers.main"
+        color="var(--color-light)"
+      />
     </div>
-    <div class="time-on-purpose text-center font-display text-acid text-[2em]">
+    <div class="time-on-purpose text-center font-display text-acid">
       {{ timeOnPurpose }}
     </div>
   </div>
 
-  <main v-else class="bg-dark grow p-[2vw_2vw_0_1vw]">
-    <div class="mt-[clamp(1em,1.5vw,100vw)] text-center">
-      <div
-        v-if="!isEditingIntention"
-        class="inline-block min-w-[300px] cursor-text bg-light/10 p-[0.1em_0.5em] text-[3em] font-display text-acid"
-        @click="startEditingIntention"
-      >
-        {{ store.intention || 'Enter your intention' }}
-      </div>
-      <input
-        v-else
-        id="intention"
-        ref="intention"
-        type="text"
-        :value="store.intention"
-        placeholder="Enter your intention"
-        class="inline-block min-w-[300px] border-none bg-light/10 p-[0.1em_0.5em] text-center text-[3em] font-display text-acid outline-none placeholder:text-acid/40"
-        @keydown.stop="onIntentionInput"
-        @blur="stopEditingIntention"
-      />
-    </div>
-    <div class="main-layout mt-[clamp(1em,1.5vw,100vw)] grid gap-x-[1vw]">
+  <main class="grow p-[2vw_2vw_0_1vw]">
+    <div class="main-layout grid gap-x-[1vw]">
       <div class="contents">
         <div class="action-item-list flex flex-col space-y-[1vw]">
           <Button label="-1 min" shortcut="j" @click="store.addTime(-MINUTE)" />
@@ -203,32 +205,31 @@ const timeOnPurpose = computed(() => {
 </template>
 
 <style scoped>
-.mini-view {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  padding: 1em;
-  text-align: center;
-  gap: 1em;
+/* Mobile-first styles (small screens) */
+.intention-container {
+  margin-top: 0;
 }
 
-.mini-view .main-timer-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 100px;
+.intention-display,
+.intention-input {
+  min-width: auto;
+  padding: 0.1em 0.5em;
+  font-size: 1.5em;
+}
+
+.mobile-timer {
+  display: block;
 }
 
 .main-layout {
+  margin-top: 1em;
   grid-template-areas:
-    'action-left timer action-right'
-    '.    timer    .'
-    '.    footer   .'
-    '.    below    .';
-  grid-template-columns: auto 1fr auto;
+    'timer'
+    'action-left'
+    'action-right'
+    'footer'
+    'below';
+  grid-template-columns: 1fr;
 }
 
 .action-item-list:first-of-type {
@@ -250,5 +251,33 @@ input.main-timer-container {
 
 .footer-action-items {
   grid-area: footer;
+}
+
+/* Large screen styles (desktop) */
+@media (min-width: 800px) and (min-height: 400px) {
+  .intention-container {
+    margin-top: clamp(1em, 1.5vw, 100vw);
+  }
+
+  .intention-display,
+  .intention-input {
+    min-width: 300px;
+    padding: 0.1em 0.5em;
+    font-size: 3em;
+  }
+
+  .mobile-timer {
+    display: none;
+  }
+
+  .main-layout {
+    margin-top: clamp(1em, 1.5vw, 100vw);
+    grid-template-areas:
+      'action-left timer action-right'
+      '.    timer    .'
+      '.    footer   .'
+      '.    below    .';
+    grid-template-columns: auto 1fr auto;
+  }
 }
 </style>

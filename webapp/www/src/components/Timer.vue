@@ -7,6 +7,7 @@ import { onMounted, ref } from 'vue'
 const props = defineProps<{
   timer: Timer
   color: string
+  size?: string
 }>()
 
 const displayTime = ref('00:00')
@@ -22,12 +23,10 @@ useListenerFn('clock-tick', handleClockTick)
 </script>
 
 <template>
-  <span :style="{ color: color }">{{ displayTime }}</span>
+  <span
+    v-bind="$attrs"
+    :style="{ color: color, fontSize: props.size ?? 'clamp(2em, 12vw, 100em)' }"
+    class="font-display"
+    >{{ displayTime }}</span
+  >
 </template>
-
-<style scoped>
-span {
-  font-family: var(--font-display);
-  font-size: clamp(2em, 12vw, 100em);
-}
-</style>
