@@ -45,7 +45,7 @@
                 ];
     in {
       devShells."x86_64-linux".default = pkgs.mkShell {
-        nativeBuildInputs = [ pkgs.nodejs_24 pkgs.pnpm pkgs.git ];
+        nativeBuildInputs = [ pkgs.nodejs_24 pkgs.pnpm pkgs.git pkgs.jq   ];
         inherit buildInputs;
         shellHook = ''
           export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath buildInputs}:$LD_LIBRARY_PATH

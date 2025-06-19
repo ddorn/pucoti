@@ -1,0 +1,168 @@
+name: Build and Release Webapp
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "pucoti/webapp/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+jobs:
+  build_and_package:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    defaults:
+      run:
+        working-directory: pucoti/webapp
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: pucoti/webapp/pnpm-lock.yaml
+
+      - name: Install OS dependencies
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y jq libfuse2
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            brew install jq
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            winget install -e --id jqlang.jq
+            echo "C:\Program Files\jq" >> $GITHUB_PATH
+          fi
+        shell: bash
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Neutralino App
+        run: pnpm exec neu build
+
+      - name: Package Linux Build
+        if: runner.os == 'Linux'
+        run: |
+          CONF=./neutralino.config.json
+          APP_NAME=$(jq -r '.buildScript.linux.appName' $CONF)
+          APP_BINARY=$(jq -r '.cli.binaryName' $CONF)
+          APP_VERSION=$(jq -r '.version' $CONF)
+          APP_ICON=$(jq -r '.buildScript.linux.appIcon' $CONF)
+          
+          BUILD_DIR="./dist/linux_x64/${APP_NAME}"
+          EXE_SRC="./dist/${APP_BINARY}/${APP_BINARY}-linux_x64"
+          RES_SRC="./dist/${APP_BINARY}/resources.neu"
+          EXT_SRC="./dist/${APP_BINARY}/extensions"
+          SCAFFOLD_DESKTOP="./packaging/app_scaffolds/linux/myapp.desktop"
+          
+          mkdir -p "${BUILD_DIR}"
+          cp "${EXE_SRC}" "${BUILD_DIR}/"
+          cp "${RES_SRC}" "${BUILD_DIR}/"
+          cp "${APP_ICON}" "${BUILD_DIR}/$(basename ${APP_ICON})"
+          cp "${SCAFFOLD_DESKTOP}" "${BUILD_DIR}/${APP_NAME}.desktop"
+          if [ -d "${EXT_SRC}" ]; then cp -r "${EXT_SRC}" "${BUILD_DIR}/"; fi
+
+          sed -i "s/{APP_NAME}/${APP_NAME}/g" "${BUILD_DIR}/${APP_NAME}.desktop"
+          sed -i "s/{APP_ICON_LOCATION}/$(basename ${APP_ICON})/g" "${BUILD_DIR}/${APP_NAME}.desktop"
+          sed -i "s|{APP_EXEC}|/${APP_BINARY}-linux_x64|g" "${BUILD_DIR}/${APP_NAME}.desktop"
+          
+          echo "#!/bin/sh" > "${BUILD_DIR}/AppRun"
+          echo "HERE=\$(dirname \"\$(readlink -f \"\${0}\")\")" >> "${BUILD_DIR}/AppRun"
+          echo "cd \"\${HERE}\" && ./${APP_BINARY}-linux_x64 \$@" >> "${BUILD_DIR}/AppRun"
+          chmod +x "${BUILD_DIR}/AppRun"
+          
+          wget -q "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage" -O ./appimagetool
+          chmod +x ./appimagetool
+          
+          FINAL_APPIMAGE_NAME="${APP_NAME}-${APP_VERSION}-linux-x64.AppImage"
+          ARCH=x86_64 ./appimagetool --no-appstream "${BUILD_DIR}" "./dist/${FINAL_APPIMAGE_NAME}"
+
+      - name: Package macOS Build
+        if: runner.os == 'macOS'
+        run: |
+          CONF=./neutralino.config.json
+          APP_NAME=$(jq -r '.buildScript.mac.appName' $CONF)
+          APP_VERSION=$(jq -r '.version' $CONF)
+          APP_BINARY=$(jq -r '.cli.binaryName' $CONF)
+          APP_ID=$(jq -r '.buildScript.mac.appIdentifier' $CONF)
+          APP_ICON=$(jq -r '.buildScript.mac.appIcon' $CONF)
+          APP_MIN_OS=$(jq -r '.buildScript.mac.minimumOS' $CONF)
+          APP_BUNDLE_NAME=$(jq -r '.buildScript.mac.appBundleName' $CONF)
+          
+          APP_BUNDLE_DIR="./dist/mac_x64/${APP_NAME}.app"
+          MACOS_DIR="${APP_BUNDLE_DIR}/Contents/MacOS"
+          RESOURCES_DIR="${APP_BUNDLE_DIR}/Contents/Resources"
+          EXE_SRC="./dist/${APP_BINARY}/${APP_BINARY}-mac_x64"
+          RES_SRC="./dist/${APP_BINARY}/resources.neu"
+          EXT_SRC="./dist/${APP_BINARY}/extensions"
+          INFO_PLIST_SCAFFOLD="./packaging/_app_scaffolds/mac/myapp.app/Contents/Info.plist"
+          
+          mkdir -p "${MACOS_DIR}"
+          mkdir -p "${RESOURCES_DIR}"
+          
+          cp "${EXE_SRC}" "${MACOS_DIR}/main"
+          chmod +x "${MACOS_DIR}/main"
+          cp "${RES_SRC}" "${RESOURCES_DIR}/"
+          cp "${APP_ICON}" "${RESOURCES_DIR}/"
+          cp "${INFO_PLIST_SCAFFOLD}" "${APP_BUNDLE_DIR}/Contents/Info.plist"
+          if [ -d "${EXT_SRC}" ]; then cp -r "${EXT_SRC}" "${RESOURCES_DIR}/"; fi
+
+          sed -i '' "s/{APP_NAME}/${APP_NAME}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
+          sed -i '' "s/{APP_ID}/${APP_ID}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
+          sed -i '' "s/{APP_VERSION}/${APP_VERSION}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
+          sed -i '' "s/{APP_BUNDLE}/${APP_BUNDLE_NAME}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
+          sed -i '' "s/{APP_MIN_OS}/${APP_MIN_OS}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
+          
+          FINAL_ZIP_NAME="${APP_NAME}-${APP_VERSION}-macOS-x64.zip"
+          cd "./dist/mac_x64"
+          zip -r "../${FINAL_ZIP_NAME}" "./${APP_NAME}.app"
+
+      - name: Package Windows Build
+        if: runner.os == 'Windows'
+        run: |
+          $CONF="./neutralino.config.json"
+          $APP_NAME_EXE = $(jq -r '.buildScript.win.appName' $CONF)
+          $APP_NAME = $APP_NAME_EXE.Replace(".exe", "")
+          $APP_VERSION = $(jq -r '.version' $CONF)
+          $APP_BINARY = $(jq -r '.cli.binaryName' $CONF)
+          $APP_ICON = $(jq -r '.buildScript.win.appIcon' $CONF)
+          
+          $BUILD_DIR = "./dist/win_x64"
+          $EXE_SRC = "./dist/${APP_BINARY}/${APP_BINARY}-win_x64.exe"
+          $RES_SRC = "./dist/${APP_BINARY}/resources.neu"
+          $EXT_SRC = "./dist/${APP_BINARY}/extensions"
+          
+          mkdir -p $BUILD_DIR
+          cp "${EXE_SRC}" "${BUILD_DIR}/${APP_NAME_EXE}"
+          cp "${RES_SRC}" "${BUILD_DIR}/"
+          cp "${APP_ICON}" "${BUILD_DIR}/"
+          if (Test-Path -Path $EXT_SRC) { cp -r "${EXT_SRC}" "${BUILD_DIR}/" }
+          
+          $FINAL_ZIP_NAME = "${APP_NAME}-${APP_VERSION}-windows-x64.zip"
+          7z a -tzip "dist/${FINAL_ZIP_NAME}" "./${BUILD_DIR}/*"
+        shell: pwsh
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pucoti-build-${{ runner.os }}
+          path: |
+            pucoti/webapp/dist/*.AppImage
+            pucoti/webapp/dist/*.zip
+          if-no-files-found: error

@@ -1,4 +1,4 @@
-@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss';
 
 :root {
   --font-sans: 'Inter', sans-serif;

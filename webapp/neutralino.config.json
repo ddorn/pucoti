@@ -25,14 +25,26 @@
     "binaryVersion": "6.1.0",
     "clientVersion": "6.1.0"
   },
-"buildScript": {
-  "mac": {
-    "architecture": ["x64", "arm64", "universal"],
-    "minimumOS": "10.13.0",
-    "appName": "pucoti",
-    "appBundleName": "pucoti",
-    "appIdentifier": "com.pucoti.app",
-    "appIcon":  "./packaging/pucoti.icns"
+  "buildScript": {
+    "mac": {
+      "architecture": ["x64", "arm64", "universal"],
+      "minimumOS": "10.13.0",
+      "appName": "pucoti",
+      "appBundleName": "pucoti",
+      "appIdentifier": "com.pucoti.app",
+      "appIcon": "./packaging/icons/pucoti.icns"
+    },
+    "win": {
+      "architecture": ["x64"],
+      "appName": "Pucoti",
+      "appIcon": "./packaging/icons/pucoti.ico"
+    },
+    "linux": {
+      "architecture": ["x64", "arm64", "armhf"],
+      "appName": "Pucoti",
+      "appIcon": "./packaging/icons/pucoti.png",
+      "appPath": "/usr/share/Pucoti",
+      "appIconPath": "/usr/share/Pucoti/icon.png"
+    }
   }
-}
 }

@@ -126,24 +126,7 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
 </script>
 
 <template>
-  <header>
-    <nav>
-      <ul>
-        <li>
-          <RouterLink to="/">
-            <AppLogo />
-          </RouterLink>
-        </li>
-        <li>
-          <a href="https://pucoti.com" class="">Download</a>
-        </li>
-        <li>
-          <RouterLink to="/settings" class="">Settings</RouterLink>
-        </li>
-      </ul>
-    </nav>
-  </header>
-  <main>
+  <main class="bg-dark grow p-[2vw_2vw_0_1vw]">
     <div class="intention-area">
       <div v-if="!isEditingIntention" class="intention-placeholder" @click="startEditingIntention">
         {{ store.intention || 'Enter your intention' }}
@@ -195,29 +178,6 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
 </template>
 
 <style scoped>
-header {
-  padding: 1vw 1vw 0 1vw;
-}
-
-nav > ul {
-  display: flex;
-  align-items: center;
-}
-
-nav > ul > li:first-child {
-  flex: 1;
-}
-
-nav > ul > li + li {
-  margin-left: 1.5em;
-}
-
-main {
-  background: var(--color-dark);
-  margin: 1vw 1vw 0 1vw;
-  flex-grow: 1;
-}
-
 .purpose {
   margin-top: clamp(1em, 1.5vw, 100vw);
   color: var(--color-acid);
