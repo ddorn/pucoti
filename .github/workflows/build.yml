@@ -124,10 +124,11 @@ jobs:
           sed -i '' "s/{APP_BUNDLE}/${APP_BUNDLE_NAME}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
           sed -i '' "s/{APP_MIN_OS}/${APP_MIN_OS}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
 
-          # Move the .app bundle to the main dist directory for artifact upload
-          FINAL_APP_NAME="${APP_NAME}-${APP_VERSION}-macOS-x64"
-          mv "${APP_BUNDLE_DIR}" "./dist/${FINAL_APP_NAME}.app"
-          echo "artifact-name=${FINAL_APP_NAME}" >> $GITHUB_OUTPUT
+          FINAL_ZIP_NAME="${APP_NAME}-${APP_VERSION}-macOS-x64"
+          cd "./dist/mac_x64"
+          # Use ditto to create a proper macOS zip that preserves resource forks and permissions
+          ditto -c -k --sequesterRsrc --keepParent "./${APP_NAME}.app" "../${FINAL_ZIP_NAME}.zip"
+          echo "artifact-name=${FINAL_ZIP_NAME}" >> $GITHUB_OUTPUT
 
       - name: Package Windows Build
         if: runner.os == 'Windows'
@@ -168,7 +169,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.package-macos.outputs.artifact-name }}
-          path: webapp/dist/*.app
+          path: webapp/dist/*.zip
 
       - name: Upload Windows Build Artifact
         if: runner.os == 'Windows'

@@ -222,14 +222,7 @@ const timeOnPurpose = computed(() => {
 }
 
 .main-layout {
-  margin-top: 1em;
-  grid-template-areas:
-    'timer'
-    'action-left'
-    'action-right'
-    'footer'
-    'below';
-  grid-template-columns: 1fr;
+  display: none;
 }
 
 .action-item-list:first-of-type {
@@ -254,7 +247,7 @@ input.main-timer-container {
 }
 
 /* Large screen styles (desktop) */
-@media (min-width: 800px) and (min-height: 400px) {
+@media (min-width: 400px) and (min-height: 300px) {
   .intention-container {
     margin-top: clamp(1em, 1.5vw, 100vw);
   }
@@ -271,6 +264,7 @@ input.main-timer-container {
   }
 
   .main-layout {
+    display: grid;
     margin-top: clamp(1em, 1.5vw, 100vw);
     grid-template-areas:
       'action-left timer action-right'
