@@ -40,17 +40,9 @@ jobs:
             echo "C:\Program Files\jq" >> $GITHUB_PATH
           fi
 
-      - name: Install dependencies
-        run: pnpm install
-        working-directory: www
-
-      - name: Build Vue App (www)
-        run: pnpm run build-only
-        working-directory: www
-
       - name: Build Neutralino App
-        run: pnpm exec neu build
-        working-directory: www
+        run: pnpx @neutralinojs/cli build --release
+        working-directory: webapp/www
 
       - name: Package Linux Build
         if: runner.os == 'Linux'
