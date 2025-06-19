@@ -127,28 +127,37 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
 
 <template>
   <main class="bg-dark grow p-[2vw_2vw_0_1vw]">
-    <div class="intention-area">
-      <div v-if="!isEditingIntention" class="intention-placeholder" @click="startEditingIntention">
+    <div class="mt-[clamp(1em,1.5vw,100vw)] text-center">
+      <div
+        v-if="!isEditingIntention"
+        class="inline-block min-w-[300px] cursor-text bg-light/10 p-[0.1em_0.5em] text-[3em] font-display text-acid"
+        @click="startEditingIntention"
+      >
         {{ store.intention || 'Enter your intention' }}
       </div>
       <input
         v-else
         id="intention"
-        type="text"
         ref="intention"
+        type="text"
         :value="store.intention"
         placeholder="Enter your intention"
+        class="inline-block min-w-[300px] border-none bg-light/10 p-[0.1em_0.5em] text-center text-[3em] font-display text-acid outline-none placeholder:text-acid/40"
         @keydown.stop="onIntentionInput"
         @blur="stopEditingIntention"
       />
     </div>
-    <div class="main-layout">
-      <div class="timer-layout">
-        <div class="action-item-list">
+    <div class="main-layout mt-[clamp(1em,1.5vw,100vw)] grid gap-x-[1vw]">
+      <div class="contents">
+        <div class="action-item-list flex flex-col space-y-[1vw]">
           <Button label="-1 min" shortcut="j" @click="store.addTime(-MINUTE)" />
           <Button label="-5 min" shortcut="J" @click="store.addTime(-5 * MINUTE)" />
         </div>
-        <div v-if="!isEditingTime" class="main-timer-container" @click="startEditingTime">
+        <div
+          v-if="!isEditingTime"
+          class="main-timer-container flex cursor-pointer items-center justify-center bg-light/10"
+          @click="startEditingTime"
+        >
           <Timer :timer="store.timers.main" color="var(--color-light)" />
         </div>
         <input
@@ -156,17 +165,17 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
           ref="timeInputRef"
           v-model="newTimeValue"
           placeholder="1h 10m"
-          class="timer-input"
+          class="main-timer-container w-full bg-transparent text-center font-display text-[clamp(4em,12vw,100vw)] text-light outline-none placeholder:text-light/50"
           @keyup.escape="stopEditingTime"
           @keyup.enter="updateTimer"
           @blur="stopEditingTime"
         />
-        <div class="action-item-list">
+        <div class="action-item-list flex flex-col space-y-[1vw]">
           <Button label="+1 min" shortcut="k" @click="store.addTime(MINUTE)" />
           <Button label="+5 min" shortcut="K" @click="store.addTime(5 * MINUTE)" />
         </div>
       </div>
-      <div class="footer-action-items">
+      <div class="footer-action-items mt-[clamp(1em,1.5vw,100vw)] flex space-x-[1vw]">
         <Button label="Create room" shortcut="C" outline />
         <Button label="Enter room" shortcut="E" outline />
       </div>
@@ -178,37 +187,13 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
 </template>
 
 <style scoped>
-.purpose {
-  margin-top: clamp(1em, 1.5vw, 100vw);
-  color: var(--color-acid);
-  font-family: var(--font-display);
-  font-size: clamp(1em, 2vw, 100vw);
-  display: block;
-  text-align: center;
-}
-
-.main-timer-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: color-mix(in oklab, var(--color-light) 10%, transparent);
-  cursor: pointer;
-}
-
 .main-layout {
-  margin-top: clamp(1em, 1.5vw, 100vw);
-  display: grid;
   grid-template-areas:
     'action-left timer action-right'
     '.    timer    .'
     '.    footer   .'
     '.    below    .';
   grid-template-columns: auto 1fr auto;
-  column-gap: 1vw;
-}
-
-.timer-layout {
-  display: contents;
 }
 
 .action-item-list:first-of-type {
@@ -227,79 +212,7 @@ useListenerFn('keydown', (e: KeyboardEvent) => {
   grid-area: action-right;
 }
 
-.action-item-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.action-item-list > * + * {
-  margin-top: 1vw;
-}
-
 .footer-action-items {
   grid-area: footer;
-  display: flex;
-  margin-top: clamp(1em, 1.5vw, 100vw);
-}
-
-.footer-action-items > * + * {
-  margin-left: 1vw;
-}
-
-.timer-input {
-  font-family: var(--font-display);
-  font-size: clamp(4em, 12vw, 100vw);
-  color: var(--color-light);
-  text-align: center;
-  width: 100%;
-  outline: none;
-}
-
-.timer-input::placeholder {
-  color: color-mix(in srgb, var(--color-light) 50%, transparent);
-}
-
-.intention-area {
-  margin-top: clamp(1em, 1.5vw, 100vw);
-  text-align: center;
-  /* Center the content within the div */
-}
-
-.intention-placeholder {
-  display: inline-block;
-  /* Allows padding and margin */
-  color: var(--color-acid);
-  background-color: color-mix(in oklab, var(--color-light) 10%, transparent);
-  font-family: var(--font-display);
-  font-size: 3em;
-  /* Match input font size */
-  padding: 0.1em 0.5em;
-  /* Add some padding to make it look like an input */
-  cursor: text;
-  /* Indicate it's clickable/editable */
-  min-width: 300px;
-  /* Ensure a minimum width */
-}
-
-#intention {
-  display: inline-block;
-  /* Use inline-block for consistent centering */
-  color: var(--color-acid);
-  background-color: color-mix(in oklab, var(--color-light) 10%, transparent);
-  font-family: var(--font-display);
-  font-size: 3em;
-  text-align: center;
-  border: none;
-  /* Remove default input border */
-  outline: none;
-  /* Remove default input outline */
-  padding: 0.1em 0.5em;
-  /* Match placeholder padding */
-  min-width: 300px;
-  /* Match placeholder width */
-}
-
-#intention::placeholder {
-  color: color-mix(in oklab, var(--color-acid) 40%, transparent);
 }
 </style>

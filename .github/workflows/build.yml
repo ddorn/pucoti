@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: "20"
           cache: "pnpm"
-          cache-dependency-path: pucoti/webapp/pnpm-lock.yaml
+          cache-dependency-path: pucoti/webapp/www/pnpm-lock.yaml
 
       - name: Install OS dependencies
         run: |
@@ -46,12 +46,15 @@ jobs:
             brew install jq
           elif [ "${{ runner.os }}" = "Windows" ]; then
             winget install -e --id jqlang.jq
-            echo "C:\Program Files\jq" >> $GITHUB_PATH
+            echo "C:\\Program Files\\jq" >> $GITHUB_PATH
           fi
         shell: bash
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --dir www
+
+      - name: Build Vue App (www)
+        run: pnpm run build-only --dir www
 
       - name: Build Neutralino App
         run: pnpm exec neu build
@@ -64,13 +67,13 @@ jobs:
           APP_BINARY=$(jq -r '.cli.binaryName' $CONF)
           APP_VERSION=$(jq -r '.version' $CONF)
           APP_ICON=$(jq -r '.buildScript.linux.appIcon' $CONF)
-          
+
           BUILD_DIR="./dist/linux_x64/${APP_NAME}"
           EXE_SRC="./dist/${APP_BINARY}/${APP_BINARY}-linux_x64"
           RES_SRC="./dist/${APP_BINARY}/resources.neu"
           EXT_SRC="./dist/${APP_BINARY}/extensions"
           SCAFFOLD_DESKTOP="./packaging/app_scaffolds/linux/myapp.desktop"
-          
+
           mkdir -p "${BUILD_DIR}"
           cp "${EXE_SRC}" "${BUILD_DIR}/"
           cp "${RES_SRC}" "${BUILD_DIR}/"
@@ -81,15 +84,15 @@ jobs:
           sed -i "s/{APP_NAME}/${APP_NAME}/g" "${BUILD_DIR}/${APP_NAME}.desktop"
           sed -i "s/{APP_ICON_LOCATION}/$(basename ${APP_ICON})/g" "${BUILD_DIR}/${APP_NAME}.desktop"
           sed -i "s|{APP_EXEC}|/${APP_BINARY}-linux_x64|g" "${BUILD_DIR}/${APP_NAME}.desktop"
-          
+
           echo "#!/bin/sh" > "${BUILD_DIR}/AppRun"
           echo "HERE=\$(dirname \"\$(readlink -f \"\${0}\")\")" >> "${BUILD_DIR}/AppRun"
           echo "cd \"\${HERE}\" && ./${APP_BINARY}-linux_x64 \$@" >> "${BUILD_DIR}/AppRun"
           chmod +x "${BUILD_DIR}/AppRun"
-          
+
           wget -q "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage" -O ./appimagetool
           chmod +x ./appimagetool
-          
+
           FINAL_APPIMAGE_NAME="${APP_NAME}-${APP_VERSION}-linux-x64.AppImage"
           ARCH=x86_64 ./appimagetool --no-appstream "${BUILD_DIR}" "./dist/${FINAL_APPIMAGE_NAME}"
 
@@ -104,7 +107,7 @@ jobs:
           APP_ICON=$(jq -r '.buildScript.mac.appIcon' $CONF)
           APP_MIN_OS=$(jq -r '.buildScript.mac.minimumOS' $CONF)
           APP_BUNDLE_NAME=$(jq -r '.buildScript.mac.appBundleName' $CONF)
-          
+
           APP_BUNDLE_DIR="./dist/mac_x64/${APP_NAME}.app"
           MACOS_DIR="${APP_BUNDLE_DIR}/Contents/MacOS"
           RESOURCES_DIR="${APP_BUNDLE_DIR}/Contents/Resources"
@@ -112,10 +115,10 @@ jobs:
           RES_SRC="./dist/${APP_BINARY}/resources.neu"
           EXT_SRC="./dist/${APP_BINARY}/extensions"
           INFO_PLIST_SCAFFOLD="./packaging/_app_scaffolds/mac/myapp.app/Contents/Info.plist"
-          
+
           mkdir -p "${MACOS_DIR}"
           mkdir -p "${RESOURCES_DIR}"
-          
+
           cp "${EXE_SRC}" "${MACOS_DIR}/main"
           chmod +x "${MACOS_DIR}/main"
           cp "${RES_SRC}" "${RESOURCES_DIR}/"
@@ -128,7 +131,7 @@ jobs:
           sed -i '' "s/{APP_VERSION}/${APP_VERSION}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
           sed -i '' "s/{APP_BUNDLE}/${APP_BUNDLE_NAME}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
           sed -i '' "s/{APP_MIN_OS}/${APP_MIN_OS}/g" "${APP_BUNDLE_DIR}/Contents/Info.plist"
-          
+
           FINAL_ZIP_NAME="${APP_NAME}-${APP_VERSION}-macOS-x64.zip"
           cd "./dist/mac_x64"
           zip -r "../${FINAL_ZIP_NAME}" "./${APP_NAME}.app"
@@ -142,18 +145,18 @@ jobs:
           $APP_VERSION = $(jq -r '.version' $CONF)
           $APP_BINARY = $(jq -r '.cli.binaryName' $CONF)
           $APP_ICON = $(jq -r '.buildScript.win.appIcon' $CONF)
-          
+
           $BUILD_DIR = "./dist/win_x64"
           $EXE_SRC = "./dist/${APP_BINARY}/${APP_BINARY}-win_x64.exe"
           $RES_SRC = "./dist/${APP_BINARY}/resources.neu"
           $EXT_SRC = "./dist/${APP_BINARY}/extensions"
-          
+
           mkdir -p $BUILD_DIR
           cp "${EXE_SRC}" "${BUILD_DIR}/${APP_NAME_EXE}"
           cp "${RES_SRC}" "${BUILD_DIR}/"
           cp "${APP_ICON}" "${BUILD_DIR}/"
           if (Test-Path -Path $EXT_SRC) { cp -r "${EXT_SRC}" "${BUILD_DIR}/" }
-          
+
           $FINAL_ZIP_NAME = "${APP_NAME}-${APP_VERSION}-windows-x64.zip"
           7z a -tzip "dist/${FINAL_ZIP_NAME}" "./${BUILD_DIR}/*"
         shell: pwsh
