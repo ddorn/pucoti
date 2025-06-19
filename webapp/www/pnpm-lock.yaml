@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@neutralinojs/lib':
+        specifier: ^6.1.0
+        version: 6.1.0
       '@tailwindcss/vite':
         specifier: ^4.1.7
         version: 4.1.7(vite@6.3.5(@types/node@22.15.18)(jiti@2.4.2)(lightningcss@1.30.1))
@@ -453,6 +456,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
+
+  '@neutralinojs/lib@6.1.0':
+    resolution: {integrity: sha512-lT8ZHDmYqZ8DI8IwSYGeIsuYuiPTiBsk75BZvvy/NSikbj/jAHF5SRhts0Wp1S7Vp2IK+wzfrECcbhMtmk4Hbg==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -2246,6 +2252,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  '@neutralinojs/lib@6.1.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:

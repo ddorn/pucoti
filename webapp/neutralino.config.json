@@ -6,7 +6,10 @@
   "url": "/",
   "enableServer": true,
   "enableNativeAPI": true,
-  "nativeAllowList": ["app.*"],
+  "nativeAllowList": [
+    "app.*",
+    "filesystem.readDirectory"
+  ],
   "modes": {
     "window": {
       "title": "Pucoti",
@@ -21,9 +24,16 @@
     "binaryName": "pucoti",
     "resourcesPath": "/www/dist/",
     "extensionsPath": "/extensions/",
-    "clientLibrary": "/www/public/neutralino.js",
     "binaryVersion": "6.1.0",
-    "clientVersion": "6.1.0"
+    "clientVersion": "6.1.0",
+    "frontendLibrary": {
+      "patchFile": "/www/index.html",
+      "devUrl": "http://localhost:5173",
+      "projectPath": "/www/",
+      "initCommand": "pnpm install",
+      "devCommand": "pnpm dev",
+      "buildCommand": "pnpm build"
+    }
   },
   "buildScript": {
     "mac": {

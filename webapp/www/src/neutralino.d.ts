@@ -837,7 +837,7 @@ interface Response {
     success: boolean;
     message: string;
   }
-  
+
   type Builtin =
       'ready' |
       'trayMenuItemClicked' |
@@ -895,3 +895,30 @@ declare const NL_CCOMMIT: string;
 /** An array of custom methods */
 declare const NL_CMETHODS: string[];
 
+declare global {
+  interface Window {
+    NL_PORT: number;
+    NL_TOKEN: string;
+    NL_APPID: string;
+    NL_CVERSION: string;
+    NL_CCOMMIT: string;
+    NL_APPVERSION: string;
+    NL_OS: string;
+    NL_ARCH: string;
+    NL_RESMODE: string;
+    NL_EXTENABLED: boolean;
+    NL_COMMIT: string;
+    NL_CARG: string;
+    NL_PATH: string;
+    NL_ARGS: string[];
+    NL_PID: number;
+    NL_WSAVSTLOGGING: boolean;
+    NL_AUTOSTART: boolean;
+    NL_BAIL: boolean;
+    NL_WSAVESTATS: boolean;
+    NL_WSAVETSOURCE: boolean;
+    Neutralino: any;
+  }
+}
+
+export {}

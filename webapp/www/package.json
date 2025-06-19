@@ -15,6 +15,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@neutralinojs/lib": "^6.1.0",
     "@tailwindcss/vite": "^4.1.7",
     "date-fns": "^4.1.0",
     "pinia": "^3.0.1",
