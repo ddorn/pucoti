@@ -1,51 +1,35 @@
 <script lang="ts" setup>
-const props = defineProps<{
+defineProps<{
   shortcut?: string
   label: string
   outline?: boolean
 }>()
 </script>
 <template>
-  <button v-bind="$attrs" :class="{ outline: outline }">
-    <span>{{ label }}</span>
-    <kbd v-if="shortcut">{{ shortcut }}</kbd>
+  <button
+    v-bind="$attrs"
+    class="inline-flex items-center justify-center gap-x-[1vw] text-light"
+    :class="
+      outline
+        ? 'border-none bg-darker p-[0.3em_0.8em]'
+        : 'button-gradient border border-light/20 p-[0.5vw_0.8vw]'
+    "
+  >
+    <span class="text-[1.2em]">{{ label }}</span>
+    <kbd
+      v-if="shortcut"
+      class="flex h-[clamp(1.2em,2vw,5em)] w-[clamp(1.2em,2vw,5em)] items-center justify-center border border-light/10 bg-dark font-mono"
+      >{{ shortcut }}</kbd
+    >
   </button>
 </template>
 
 <style scoped>
-button {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0 1vw;
-
-  padding: 0.5vw 0.8vw;
-
-  color: var(--color-light);
-  border: 1px solid color-mix(in oklab, var(--color-light) 20%, transparent);
-  background-image: linear-gradient(to top,
-      transparent 0%,
-      color-mix(in oklab, var(--color-light) 15%, var(--color-dark)) 90%);
-}
-
-button.outline {
-  border: none;
-  background: var(--color-darker);
-  padding: 0.3em 0.8em;
-}
-
-span {
-  font-size: 1.2em;
-}
-
-kbd {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: monospace;
-  width: clamp(1.2em, 2vw, 5em);
-  height: clamp(1.2em, 2vw, 5em);
-  background-color: var(--color-dark);
-  border: 1px solid color-mix(in oklab, var(--color-light) 10%, transparent);
+.button-gradient {
+  background-image: linear-gradient(
+    to top,
+    transparent 0%,
+    color-mix(in oklab, var(--color-light) 15%, var(--color-dark)) 90%
+  );
 }
 </style>
