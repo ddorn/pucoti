@@ -41,7 +41,7 @@ jobs:
           fi
 
       - name: Build Neutralino App
-        run: pnpx @neutralinojs/cli build --release
+        run: pnpx @neutralinojs/neu build --release
         working-directory: webapp/www
 
       - name: Package Linux Build
