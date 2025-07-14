@@ -21,7 +21,19 @@ body {
 }
 
 body {
-  font-size: clamp(1rem, 1.5vw, 1.5rem);
+  font-size: 1rem;
+}
+
+@media (min-width: 1067px) {
+  body {
+    font-size: 1.5vw;
+  }
+}
+
+@media (min-width: 1600px) {
+  body {
+    font-size: 1.5rem;
+  }
 }
 
 #app {

@@ -50,6 +50,8 @@ export function humanTimeToMs(duration: string): number {
     return -humanTimeToMs(duration.slice(1))
   }
 
+  duration = duration.toLowerCase()
+
   // Parse the duration.
   let total = 0
   const multiplier = { s: 1, m: 60, h: 3600, d: 86400 }

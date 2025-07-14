@@ -22,6 +22,9 @@ function checkTime() {
   } else {
     store.lastRung = 0
   }
+
+  // Check and execute commands
+  store.checkCommands()
 }
 
 useIntervalFn(tickClock, 1000)

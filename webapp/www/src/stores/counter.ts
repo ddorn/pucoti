@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { IntentionHistoryItem, Timer } from '@/types'
+import type { IntentionHistoryItem, Timer, CommandConfig } from '@/types'
 import { tickClock } from '@/lib'
+import { commandExecutor } from '@/command-executor'
 
 export interface SocialConfig {
   room: string
@@ -35,14 +36,6 @@ export const usePucotiStore = defineStore('pucoti', {
       lastRung: 0,
       ringEvery: '20s', // seconds
       secondaryTimers: ['onIntention'],
-      commands: [
-        {
-          at: '0m',
-          every: '1m',
-          cmd: "notify-send 'Pucoti' 'Time was up 1+ minute ago !!'",
-          lastRan: 0,
-        },
-      ],
       timers: {
         main: {
           zeroAt: ringTime,
@@ -102,6 +95,7 @@ export const usePucotiStore = defineStore('pucoti', {
     },
     setRingIn(ms: number) {
       this.timers.main.zeroAt = Date.now() + ms
+      commandExecutor.resetCommandStates()
       tickClock()
     },
     updateHistoricalIntention(index: number, newIntention: string) {
@@ -203,6 +197,23 @@ export const usePucotiStore = defineStore('pucoti', {
       if (this.social.room && this.social.username) {
         this.updateServer(true)
       }
+    },
+    // Command execution methods
+    getCommands(): CommandConfig[] {
+      return commandExecutor.getCommands()
+    },
+    addCommand(command: Omit<CommandConfig, 'id'>): string {
+      return commandExecutor.addCommand(command)
+    },
+    updateCommand(id: string, updates: Partial<Omit<CommandConfig, 'id'>>): boolean {
+      return commandExecutor.updateCommand(id, updates)
+    },
+    deleteCommand(id: string): boolean {
+      return commandExecutor.deleteCommand(id)
+    },
+    async checkCommands(): Promise<void> {
+      const currentTimeMs = this.timers.main.zeroAt - Date.now()
+      await commandExecutor.checkAndExecuteCommands(currentTimeMs)
     },
   },
 })

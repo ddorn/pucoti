@@ -7,9 +7,10 @@ import CreateRoomModal from '@/components/CreateRoomModal.vue'
 import JoinRoomModal from '@/components/JoinRoomModal.vue'
 import { usePucotiStore } from '@/stores/counter'
 import router from '@/router'
-import { humanTimeToMs, MINUTE, timerToString } from '@/utils'
+import { humanTimeToMs, MINUTE, timerToMs } from '@/utils' // Replaced timerToString with timerToMs
 import { useListenerFn } from '@/lib'
 import TimersList from '@/components/TimersList.vue'
+import ReactiveTimer from '@/components/ReactiveTimer.vue' // Added ReactiveTimer import
 
 const store = usePucotiStore()
 
@@ -81,6 +82,7 @@ function onIntentionInput(e: KeyboardEvent) {
 
 // --- Global Shortcuts ---
 const handleKeydown = (e: KeyboardEvent) => {
+  return
   if (isEditingIntention.value || isEditingTime.value) {
     return
   }
@@ -139,13 +141,13 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 useListenerFn('keydown', handleKeydown)
 
-const timeOnPurpose = computed(() => {
-  return timerToString(store.timers.main)
+const onIntentionDisplayColor = computed(() => {
+  return timerToMs(store.timers.onIntention) < 0 ? 'var(--timer-negative)' : 'var(--color-acid)'
 })
 </script>
 
 <template>
-  <div class="intention-container text-center">
+  <div class="intention-container text-center border-4 border-red-400">
     <div
       v-if="!isEditingIntention"
       class="intention-display inline-block cursor-text bg-light/10 font-display text-acid"
@@ -165,6 +167,7 @@ const timeOnPurpose = computed(() => {
       @blur="stopEditingIntention"
     />
   </div>
+  <!--
   <div class="mobile-timer">
     <div class="text-center">
       <Timer
@@ -174,10 +177,13 @@ const timeOnPurpose = computed(() => {
         color="var(--color-light)"
       />
     </div>
-    <div class="time-on-purpose text-center font-display text-acid">
-      {{ timeOnPurpose }}
+    <div class="time-on-purpose text-center font-display">
+      <span :style="{ color: onIntentionDisplayColor }">
+        <ReactiveTimer :timer="store.timers.onIntention" />
+      </span>
     </div>
   </div>
+  -->
 
   <main class="grow p-[2vw_2vw_0_1vw]">
     <div class="main-layout grid gap-x-[1vw]">
@@ -235,14 +241,8 @@ const timeOnPurpose = computed(() => {
   </main>
 
   <!-- Social Modals -->
-  <CreateRoomModal 
-    :show="showCreateRoomModal" 
-    @close="showCreateRoomModal = false" 
-  />
-  <JoinRoomModal 
-    :show="showJoinRoomModal" 
-    @close="showJoinRoomModal = false" 
-  />
+  <CreateRoomModal :show="showCreateRoomModal" @close="showCreateRoomModal = false" />
+  <JoinRoomModal :show="showJoinRoomModal" @close="showJoinRoomModal = false" />
 </template>
 
 <style scoped>

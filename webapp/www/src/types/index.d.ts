@@ -10,3 +10,11 @@ export type Timer = {
   color: string
   name: string
 }
+
+export type CommandConfig = {
+  id: string
+  at: string
+  cmd: string
+  every?: string
+  lastExecuted?: number
+}
