@@ -161,6 +161,10 @@ class App(luckypot.App[PucotiScreen]):
     def make_window_big(self):
         """Make the window big."""
         self.window.size = self.config.window.big_size
+        platforms.place_window(
+            self.window,
+            *self.current_window_position,
+        )
 
 
 defaults = PucotiConfig()
