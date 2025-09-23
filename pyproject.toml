@@ -21,7 +21,10 @@ dependencies = [
 ]
 
 [dependency-groups]
-server = ["fastapi>=0.115.4", "uvicorn>=0.32.0"]
+server = [
+    "fastapi>=0.115.4",
+    "uvicorn>=0.32.0",
+]
 dev = [
     "hatch>=1.13.0",
     "ipykernel>=6.29.5",
@@ -29,10 +32,6 @@ dev = [
     "pytest>=8.3.3",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pyinstaller>=6.13.0"
-]
 
 [project.urls]
 Homepage = "https://github.com/ddorn/pucoti"

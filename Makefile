@@ -53,7 +53,7 @@ check_git_status:
 
 
 wheel:
-	hatch build -t wheel
+	uv build --wheel
 
 patch: check_git_status version_patch commit_version_bump wheel
 minor: check_git_status version_minor commit_version_bump wheel
