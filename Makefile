@@ -28,19 +28,19 @@ run:
 # 	WINEDEBUG=-all wine pyinstaller.exe --noconsole --add-data assets\;assets --onefile pucoti.py
 
 version_patch:
-	hatch version patch
+	uv version --bump patch
 
 version_minor:
-	hatch version minor
+	uv version --bump minor
 
 version_major:
-	hatch version major
+	uv version --bump major
 
 commit_version_bump:
-	@echo "Bumped version to $$(hatch version)"
-	git add src/pucoti/version.py
-	git commit -m "chore: bump version to $$(hatch version)"
-	git tag -a "v$$(hatch version)" -m "v$$(hatch version)"
+	@echo "Bumped version to $$(uv version --short)"
+	git add pyproject.toml
+	git commit -m "chore: bump version to $$(uv version --short)"
+	git tag -a "v$$(uv version --short)" -m "v$$(uv version --short)"
 
 check_git_status:
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -60,7 +60,7 @@ minor: check_git_status version_minor commit_version_bump wheel
 major: check_git_status version_major commit_version_bump wheel
 
 publish:
-	hatch publish
+	uv publish
 
 clean:
 	rm -r build
@@ -77,4 +77,4 @@ deploy:
 	ssh hyperion "systemctl --user restart pucoti"
 
 server:
-	poetry run uvicorn pucoti.server:app --reload --port 9123
+	uv run uvicorn pucoti.server:app --reload --port 9123
