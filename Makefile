@@ -38,7 +38,7 @@ version_major:
 
 commit_version_bump:
 	@echo "Bumped version to $$(uv version --short)"
-	git add pyproject.toml
+	git add pyproject.toml uv.lock
 	git commit -m "chore: bump version to $$(uv version --short)"
 	git tag -a "v$$(uv version --short)" -m "v$$(uv version --short)"
 
