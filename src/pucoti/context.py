@@ -14,6 +14,7 @@ from . import constants, db, time_utils, pygame_utils, platforms
 from .config import PucotiConfig
 from .purpose import Purpose
 from .server_comunication import UpdateRoomRequest, UserData, send_update
+from .telemetry import TelemetryClient
 
 if TYPE_CHECKING:
     from .app import App
@@ -23,13 +24,20 @@ if TYPE_CHECKING:
 class Context:
     config: PucotiConfig
     app: "App"
+    telemetry: TelemetryClient
     history_file: Path
     purpose_history: list[Purpose]
     friend_activity: list[UserData]
 
-    def __init__(self, config: PucotiConfig, app: luckypot.App):
+    def __init__(
+        self,
+        config: PucotiConfig,
+        app: luckypot.App,
+        telemetry: TelemetryClient,
+    ):
         self.config = config
         self.app = app
+        self.telemetry = telemetry
 
         self.history_file = config.history_file.expanduser()
         self.history_file.parent.mkdir(parents=True, exist_ok=True)

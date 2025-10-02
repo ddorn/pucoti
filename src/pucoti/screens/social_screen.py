@@ -37,6 +37,7 @@ class SocialLoginScreen(PucotiScreen):
         self.ctx.config.social.username = data["name"].strip()
         self.ctx.config.social.room = data["room"].strip()
         self.ctx.config.social.enabled = True
+        self.ctx.telemetry.emit_social_join()
 
     def draw(self, gfx: GFX):
         super().draw(gfx)

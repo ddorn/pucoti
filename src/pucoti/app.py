@@ -41,6 +41,7 @@ from .screens.base_screen import PucotiScreen
 from .screens.start_screen import StartScreen
 from .context import Context
 from .controller import Controller
+from .telemetry import TelemetryClient
 
 
 class App(luckypot.App[PucotiScreen]):
@@ -49,10 +50,15 @@ class App(luckypot.App[PucotiScreen]):
 
     def __init__(self, config: PucotiConfig):
         self.config = config
+        telemetry = TelemetryClient(config.telemetry)
+
         self.ctx = Context(
             config=config,
             app=self,
+            telemetry=telemetry,
         )
+
+        telemetry.emit_app_started()
 
         if config.window.start_small:
             self.INITIAL_SIZE = config.window.small_size
@@ -206,6 +212,7 @@ def run(
     run_at: Annotated[list[RunAtConfig], doc("run_at", help=" E.g. '-1m:suspend'", parser=RunAtConfig.from_string)] = [],
     borderless: Annotated[bool, doc("window.borderless")] = defaults.window.borderless,
     social: Annotated[SocialConfig, typer.Option(help="Share timer online. Fmt: 'usernam@room'", parser=SocialConfig.from_string)] = None,
+    telemetry: Annotated[bool, doc("telemetry")] = defaults.telemetry,
     print_config: Annotated[bool, typer.Option("--print-config", help="Print the configuration and exit", callback=print_config, is_eager=True)] = False,
     config_file: Annotated[Path, typer.Option("--config", help="Path to the configuration file")] = constants.CONFIG_PATH,
     # fmt: on

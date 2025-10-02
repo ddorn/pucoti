@@ -137,3 +137,4 @@ class PucotiConfig(Config):
     run_at: list[RunAtConfig] = field(default_factory=list)
     social: SocialConfig = SocialConfig()
     notification: NotificationConfig = NotificationConfig()
+    telemetry: Annotated[bool, Field(description="Send minimal anonymous telemetry")] = True

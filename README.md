@@ -48,6 +48,18 @@ That's it! PUCOTI should now be up and running.
 
 ![Usage](./images/cli-help.webp)
 
+## Telemetry
+
+I collect minimal anonymous usage statistics to prioritise per-platform
+development. On startup, PUCOTI sends its version and basic OS/desktop metadata.
+It also reports when you use some specific features (e.g. joining a room).  You
+can see what is sent in [telemetry.py](./src/pucoti/telemetry.py) and
+desactivate it by passing `--no-telemetry` or setting `telemetry = false` in the
+config file.
+
+It also lets me know how many people use PUCOTI, and this motivates me a lot to
+keep making it better!
+
 
 ## Contributors
 

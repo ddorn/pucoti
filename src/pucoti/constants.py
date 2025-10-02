@@ -7,12 +7,30 @@ import pygame.locals as pg
 from pathlib import Path
 import platformdirs
 
-USER_ID = str(uuid.uuid4())
+
+def load_or_create_user_id(path: Path) -> str:
+    if path.exists():
+        return path.read_text().strip()
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    user_id = str(uuid.uuid4())
+    path.write_text(user_id)
+    return user_id
+
 
 DIRS = platformdirs.PlatformDirs("pucoti", "ddorn", ensure_exists=True)
 CONFIG_PATH = Path(DIRS.user_config_dir) / "default.yaml"
 DATA_DIR = Path(DIRS.user_data_dir)
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = Path(DIRS.user_data_dir) / "pucoti.db"
+
+CLIENT_ID_PATH = DATA_DIR / "client_id"
+USER_ID = load_or_create_user_id(CLIENT_ID_PATH)
+
+UMAMI_URL_BASE = "https://umami.therandom.space"
+UMAMI_WEBSITE_ID = "465a03b6-3e60-42c3-ad68-3f36b958c4e2"
+UMAMI_HOSTNAME = "pucoti-app"
+
 print(f"Configuration file: {CONFIG_PATH}")
 
 CONTROLER_PORT = 8421
