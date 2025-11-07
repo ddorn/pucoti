@@ -134,7 +134,12 @@ class PucotiConfig(Config):
     font: FontConfig = FontConfig()
     color: ColorConfig = ColorConfig()
     window: WindowConfig = WindowConfig()
-    run_at: list[RunAtConfig] = field(default_factory=list)
+    run_at: Annotated[
+        list[RunAtConfig],
+        Field(
+            description="Run a given command at the specified time (e.g. run \"suspend\" 1 minute before time is up with '-1m:suspend')"
+        ),
+    ] = field(default_factory=list)
     social: SocialConfig = SocialConfig()
     notification: NotificationConfig = NotificationConfig()
     telemetry: Annotated[bool, Field(description="Send minimal anonymous telemetry")] = True
