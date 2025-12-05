@@ -135,10 +135,7 @@ class PucotiConfig(Config):
     color: ColorConfig = ColorConfig()
     window: WindowConfig = WindowConfig()
     run_at: Annotated[
-        list[RunAtConfig],
-        Field(
-            description="Run a given command at the specified time (e.g. run \"suspend\" 1 minute before time is up with '-1m:suspend')"
-        ),
+        list[RunAtConfig], Field(description="Commands with times to run them at"),
     ] = field(default_factory=list)
     social: SocialConfig = SocialConfig()
     notification: NotificationConfig = NotificationConfig()

@@ -211,7 +211,7 @@ def run(
     restart: Annotated[bool, doc("restart")] = defaults.restart,
     borderless: Annotated[bool, typer.Option(help="Whether to make the GUI window borderless")] = defaults.window.borderless,
     social: Annotated[SocialConfig, typer.Option(help="Share timer online (e.g. 'username@room')", parser=SocialConfig.from_string)] = None,
-    run_at: Annotated[list[RunAtConfig], doc("run_at", parser=RunAtConfig.from_string)] = [],
+    run_at: Annotated[list[RunAtConfig], typer.Option(help="Run a given command at the specified time (e.g. run \"suspend\" 1 minute before time is up with '-1m:suspend')", parser=RunAtConfig.from_string)] = [],
     telemetry: Annotated[bool, doc("telemetry")] = defaults.telemetry,
     print_config: Annotated[bool, typer.Option("--print-config", help="Print the configuration and exit", callback=print_config, is_eager=True)] = False,
     config_file: Annotated[Path, typer.Option("--config", help="Path to the configuration file")] = constants.CONFIG_PATH,
