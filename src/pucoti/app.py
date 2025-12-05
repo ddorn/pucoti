@@ -209,7 +209,7 @@ def run(
     ctx: typer.Context,
     initial_timer: Annotated[str, doc("initial_timer", argument=True)] = defaults.initial_timer,
     restart: Annotated[bool, doc("restart")] = defaults.restart,
-    borderless: Annotated[bool, typer.Option(help="Whether to make the GUI window borderless")] = defaults.window.borderless,
+    borderless: Annotated[bool, doc("window.borderless")] = defaults.window.borderless,
     social: Annotated[SocialConfig, typer.Option(help="Share timer online (e.g. 'username@room')", parser=SocialConfig.from_string)] = None,
     run_at: Annotated[list[RunAtConfig], typer.Option(help="Run a given command at the specified time (e.g. run \"suspend\" 1 minute before time is up with '-1m:suspend')", parser=RunAtConfig.from_string)] = [],
     telemetry: Annotated[bool, doc("telemetry")] = defaults.telemetry,

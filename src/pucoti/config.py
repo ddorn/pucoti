@@ -64,7 +64,9 @@ class WindowConfig(Config):
     initial_position: tuple[int, int] = (-5, -5)
     small_size: tuple[int, int] = (220, 80)
     big_size: tuple[int, int] = (800, 360)
-    borderless: bool = True
+    borderless: Annotated[
+        bool, Field(description="Whether to make the GUI window borderless")
+    ] = True
     start_small: bool = False
     resizable: bool = True
     always_on_top: bool = True
