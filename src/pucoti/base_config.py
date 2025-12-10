@@ -86,10 +86,8 @@ class Config(BaseModel):
 
         if field.description is not None:
             return field.description
-        try:
-            return field.annotation.__doc__
-        except AttributeError:
-            return None
+
+        return None
 
 
 def to_nice_yaml(name: str, obj):
