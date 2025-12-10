@@ -5,7 +5,6 @@ from pathlib import Path
 from time import time
 from typing import TYPE_CHECKING
 
-import luckypot
 import pygame
 
 from .callback import CountdownCallback
@@ -32,7 +31,7 @@ class Context:
     def __init__(
         self,
         config: PucotiConfig,
-        app: luckypot.App,
+        app: "App",
         telemetry: TelemetryClient,
     ):
         self.config = config

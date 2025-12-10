@@ -64,7 +64,7 @@ class MainScreen(PucotiScreen):
         if event.type == pg.MOUSEMOTION:
             self.last_mouse_move = time()
 
-        elif event.type == pg.KEYDOWN:
+        if event.type == pg.KEYDOWN:
 
             # We only handle keydown events from here on.
             match event.key:

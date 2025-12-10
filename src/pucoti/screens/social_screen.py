@@ -52,6 +52,7 @@ class SocialLoginScreen(PucotiScreen):
             return True
         if self.login_edit.handle_event(event):
             return True
+        return False
 
 
 class SocialScreen(PucotiScreen):

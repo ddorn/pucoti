@@ -10,13 +10,20 @@ from . import time_utils
 from .context import Context
 
 
+class NoAppFoundError(Exception):
+    """Raised when no pucoti app instance is found."""
+
+    def __init__(self):
+        super().__init__("Error: no app found, is pucoti running?")
+
+
 def get_ctx() -> Context:
     from . import app
 
     try:
         return app.App.current_state().ctx
     except AttributeError:
-        return None
+        raise NoAppFoundError()
 
 
 def send_message(data: dict):
@@ -49,9 +56,10 @@ def remote_if_not_in_main_app(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if get_ctx():  # In the main pucoti instance
+        try:
+            get_ctx()  # In the main pucoti instance
             return func(*args, **kwargs)
-        else:  # As script to send message
+        except NoAppFoundError:  # As script to send message
             send_message(
                 {
                     "function": func.__name__,
@@ -67,8 +75,9 @@ def remote_if_not_in_main_app(func):
 @remote_if_not_in_main_app
 def set_purpose(purpose: str):
     """Set the pupose in the current pucoti session"""
+    ctx = get_ctx()
     print(f"Controller: Setting purpose to {purpose}")
-    get_ctx().set_purpose(purpose)
+    ctx.set_purpose(purpose)
 
 
 @cli.command()
@@ -105,11 +114,12 @@ def task_track_from_marvin(timer: int, purpose: list[str]):
         Then follow the instructions in the app.
     """
 
+    ctx = get_ctx()
     if timer:
-        get_ctx().set_timer_to(timer / 1000)
-    purpose = " ".join(purpose)
-    purpose = clean_marvin_task_name(purpose)
-    get_ctx().set_purpose(purpose)
+        ctx.set_timer_to(timer / 1000)
+    purpose_str = " ".join(purpose)
+    purpose_str = clean_marvin_task_name(purpose_str)
+    ctx.set_purpose(purpose_str)
 
 
 @cli.command()
@@ -123,12 +133,13 @@ def mark_done_from_marvin(task: list[str]):
     """
 
     ctx = get_ctx()
-    if ctx.purpose == clean_marvin_task_name(task):
+    task_str = " ".join(task)
+    if ctx.purpose == clean_marvin_task_name(task_str):
         ctx.set_purpose("")
     else:
         print("Purpose does not match current task.")
         print(f"Current purpose: {ctx.purpose}")
-        print(f"Task: {task}")
+        print(f"Task: {task_str}")
 
 
 class Controller:

@@ -53,7 +53,7 @@ def place_window(window, x: int, y: int):
 def set_window_to_sticky():
     if IS_MACOS:
         try:
-            from AppKit import (
+            from AppKit import (  # type: ignore[import-untyped]
                 NSApplication,
                 NSFloatingWindowLevel,
                 NSWindowCollectionBehaviorCanJoinAllSpaces,
@@ -108,7 +108,7 @@ def _get_active_window_title_and_class() -> tuple[str, str]:
 
     elif IS_MACOS:
         # GPT-4 code. Not tested.
-        from AppKit import NSWorkspace
+        from AppKit import NSWorkspace  # type: ignore[import-untyped]
 
         workspace = NSWorkspace.sharedWorkspace()
         active_app = workspace.frontmostApplication()

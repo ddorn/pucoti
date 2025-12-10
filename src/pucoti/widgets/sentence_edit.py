@@ -21,10 +21,11 @@ class Field:
 
 
 class SentenceEdit:
+
     def __init__(
         self,
         parts: list[str | Field],
-        text_color,
+        text_color: tuple[int, int, int],
         font: DFont,
         submit_callback: Callable[[dict[str, str]], None] = lambda data: None,
         help_text: str = "CTRL+ENTER to submit",
@@ -89,8 +90,12 @@ class SentenceEdit:
         self.text_edits[self.fields[self.editing].name].editing = True
 
     def draw(self, gfx: GFX, rect: pygame.Rect):
-        parts = [
-            (f, self.text_color) if isinstance(f, str) else (self.text_edits[f.name].text, f.color)
+        parts: list[tuple[str, pygame.Color]] = [
+            (
+                (f, pygame.Color(self.text_color))
+                if isinstance(f, str)
+                else (self.text_edits[f.name].text, pygame.Color(f.color))
+            )
             for f in self.parts
         ]
         text, rects, font_size = self.font.render_parts(parts, rect.size, align=pygame.FONT_CENTER)

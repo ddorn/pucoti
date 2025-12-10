@@ -210,7 +210,7 @@ def run(
     initial_timer: Annotated[str, doc("initial_timer", argument=True)] = defaults.initial_timer,
     restart: Annotated[bool, doc("restart")] = defaults.restart,
     borderless: Annotated[bool, doc("window.borderless")] = defaults.window.borderless,
-    social: Annotated[SocialConfig, typer.Option(help="Share timer online (e.g. 'username@room')", parser=SocialConfig.from_string)] = None,
+    social: Annotated[SocialConfig | None, typer.Option(help="Share timer online (e.g. 'username@room')", parser=SocialConfig.from_string)] = None,
     run_at: Annotated[list[RunAtConfig], typer.Option(help="Run a given command at the specified time (e.g. run \"suspend\" 1 minute after time is up with '-1m:suspend')", parser=RunAtConfig.from_string)] = [],
     telemetry: Annotated[bool, doc("telemetry")] = defaults.telemetry,
     print_config: Annotated[bool, typer.Option("--print-config", help="Print the configuration and exit", callback=print_config, is_eager=True)] = False,
