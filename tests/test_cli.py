@@ -3,7 +3,6 @@ from typer.testing import CliRunner
 from pucoti.app import app
 from pucoti.controller import cli
 
-
 runner = CliRunner()
 
 

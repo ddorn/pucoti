@@ -6,7 +6,6 @@ import fastapi
 
 from .server_comunication import UpdateRoomRequest, UserData
 
-
 DATA = Path(__file__).parent.parent / "data"
 
 OLD_DATA_CLEANUP = 1 * 60  # 1 minute

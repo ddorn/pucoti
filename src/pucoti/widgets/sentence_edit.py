@@ -9,7 +9,6 @@ from luckypot import GFX
 from ..dfont import DFont
 from .text_edit import TextEdit
 
-
 __all__ = ["SentenceEdit", "Field"]
 
 

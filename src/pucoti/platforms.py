@@ -16,7 +16,6 @@ import pygame
 
 from . import constants
 
-
 # Diego uses sway, and it needs a few tweaks as it's a non-standard window manager.
 RUNS_ON_SWAY = os.environ.get("SWAYSOCK") is not None
 IS_MACOS = sys.platform == "darwin" or platform.system() == "Darwin"
