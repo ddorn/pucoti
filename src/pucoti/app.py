@@ -24,7 +24,6 @@ from typing import Annotated
 import typer
 from click.core import ParameterSource
 
-
 # By default pygame prints its version to the console when imported. We deactivate that.
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
