@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from .constants import DATA_DIR
+import time
+from collections.abc import Iterator
+from pathlib import Path
 
 # %%
-from typing import ClassVar, Iterator, Literal
-import time
-from pathlib import Path
+from typing import ClassVar, Literal
+
 from pydantic import BaseModel
+
+from .constants import DATA_DIR
 
 # %%
 

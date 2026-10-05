@@ -3,9 +3,10 @@ import uuid
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
-import pygame.locals as pg
 from pathlib import Path
+
 import platformdirs
+import pygame.locals as pg
 
 
 def load_or_create_user_id(path: Path) -> str:

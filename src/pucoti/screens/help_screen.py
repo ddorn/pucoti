@@ -1,5 +1,5 @@
-from luckypot.gfx import GFX
 import pygame as pg
+from luckypot.gfx import GFX
 
 from .. import constants
 from .base_screen import PucotiScreen

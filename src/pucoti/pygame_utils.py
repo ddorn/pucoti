@@ -3,6 +3,7 @@ This module provides utility functions for working with Pygame.
 """
 
 import random
+
 import pygame
 
 

@@ -1,6 +1,6 @@
-from . import db
-from . import platforms
 import time
+
+from . import db, platforms
 
 
 def get_activity(duration: float = 1) -> db.FocusedWindow:

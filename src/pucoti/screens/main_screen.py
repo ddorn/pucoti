@@ -1,17 +1,15 @@
 import random
 from time import time
 
+import luckypot
 import pygame
 import pygame.locals as pg
-import luckypot
 
-from .. import time_utils
-from .. import pygame_utils
-from .. import constants
-from .base_screen import PucotiScreen
-from . import help_screen, purpose_history_screen, social_screen
+from .. import constants, pygame_utils, time_utils
 from ..context import Context
 from ..widgets.text_edit import TextEdit
+from . import help_screen, purpose_history_screen, social_screen
+from .base_screen import PucotiScreen
 
 
 class MainScreen(PucotiScreen):

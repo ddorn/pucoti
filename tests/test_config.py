@@ -1,9 +1,8 @@
 from typing import Annotated, ClassVar
 
-from pydantic import Field
-
 import pytest
 import yaml
+from pydantic import Field
 
 from pucoti import config
 from pucoti.base_config import Config

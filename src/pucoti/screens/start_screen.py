@@ -1,8 +1,8 @@
-import pygame.locals as pg
 import luckypot
+import pygame.locals as pg
 
-from .base_screen import PucotiScreen
 from . import main_screen
+from .base_screen import PucotiScreen
 
 
 class StartScreen(PucotiScreen):

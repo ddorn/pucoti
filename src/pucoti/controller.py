@@ -1,12 +1,12 @@
 import functools
 import re
 import threading
-import zmq
-import typer
 import traceback
 
-from . import constants
-from . import time_utils
+import typer
+import zmq
+
+from . import constants, time_utils
 from .context import Context
 
 

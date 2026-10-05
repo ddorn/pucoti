@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from time import time
-from typing import Callable
 
 import pygame
 import pygame.locals as pg
@@ -9,8 +9,7 @@ from luckypot import GFX
 from ..dfont import DFont
 from .text_edit import TextEdit
 
-
-__all__ = ["SentenceEdit", "Field"]
+__all__ = ["Field", "SentenceEdit"]
 
 
 @dataclass

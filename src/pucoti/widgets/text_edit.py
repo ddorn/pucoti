@@ -1,6 +1,6 @@
 import re
+from collections.abc import Callable
 from time import time
-from typing import Callable
 
 import pygame
 import pygame.locals as pg

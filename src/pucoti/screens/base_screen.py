@@ -2,8 +2,8 @@ import luckypot
 import pygame
 import pygame.locals as pg
 
-from ..context import Context
 from ..assets import load_icon
+from ..context import Context
 
 
 class PucotiScreen(luckypot.AppState):
@@ -71,7 +71,7 @@ class PucotiScreen(luckypot.AppState):
         return super().handle_event(event)
 
     def switch_to(self, state_name: str):
-        from . import main_screen, help_screen, purpose_history_screen, social_screen
+        from . import help_screen, main_screen, purpose_history_screen, social_screen
 
         states = {
             "home": main_screen.MainScreen,

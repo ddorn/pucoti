@@ -1,8 +1,8 @@
-from importlib.metadata import PackageNotFoundError, version
-from typing import Mapping
 import os
 import platform
 import threading
+from collections.abc import Mapping
+from importlib.metadata import PackageNotFoundError, version
 
 import umami
 

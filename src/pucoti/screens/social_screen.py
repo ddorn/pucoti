@@ -1,12 +1,13 @@
 from time import time
-from luckypot import GFX
+
 import pygame
+from luckypot import GFX
 
-from pucoti.widgets.sentence_edit import SentenceEdit, Field
+from pucoti.widgets.sentence_edit import Field, SentenceEdit
 
-from .base_screen import PucotiScreen
 from ..pygame_utils import split_rect
 from ..time_utils import fmt_duration
+from .base_screen import PucotiScreen
 
 
 class SocialLoginScreen(PucotiScreen):
