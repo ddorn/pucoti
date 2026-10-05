@@ -3,8 +3,8 @@ This file countains a lot of small utility functions, to convert times
 to multiple string formats and back.
 """
 
-from time import time
 from datetime import datetime
+from time import time
 
 
 def fmt_duration(seconds):

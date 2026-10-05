@@ -3,19 +3,18 @@ This file contains code to handle platform specific code.
 It covers functionnalities such as manipulating windows.
 """
 
+import asyncio
 import os
 import platform
 import subprocess
 import sys
-import warnings
 import traceback
-import asyncio
+import warnings
 
-from desktop_notifier import DesktopNotifier, Icon
 import pygame
+from desktop_notifier import DesktopNotifier, Icon
 
 from . import constants
-
 
 # Diego uses sway, and it needs a few tweaks as it's a non-standard window manager.
 RUNS_ON_SWAY = os.environ.get("SWAYSOCK") is not None

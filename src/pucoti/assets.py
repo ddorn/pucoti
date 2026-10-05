@@ -5,7 +5,7 @@ import pygame
 from .constants import ICONS_FOLDER
 
 
-@lru_cache()
+@lru_cache
 def load_icon(name: str, color):
     # The icon is grayscale, and we want to convert it to:
     # white = transparent

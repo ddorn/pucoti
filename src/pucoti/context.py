@@ -7,9 +7,8 @@ from typing import TYPE_CHECKING
 
 import pygame
 
+from . import constants, db, platforms, pygame_utils, time_utils
 from .callback import CountdownCallback
-
-from . import constants, db, time_utils, pygame_utils, platforms
 from .config import PucotiConfig
 from .purpose import Purpose
 from .server_comunication import UpdateRoomRequest, UserData, send_update

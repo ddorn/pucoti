@@ -8,9 +8,9 @@ and draw tables.
 This code is somewhat britle and unfortunately has no tests, so I don't recommend modifying it.
 """
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
-import re
 
 import pygame
 import pygame.locals as pg

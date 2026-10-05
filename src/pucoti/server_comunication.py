@@ -1,5 +1,5 @@
-from typing import Callable
 import threading
+from collections.abc import Callable
 
 import requests
 from pydantic import BaseModel

@@ -1,8 +1,8 @@
-from dataclasses import dataclass
 import dataclasses
 import json
-from time import time
+from dataclasses import dataclass
 from pathlib import Path
+from time import time
 
 
 @dataclass

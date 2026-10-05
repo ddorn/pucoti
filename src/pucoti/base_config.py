@@ -1,8 +1,9 @@
 from pathlib import Path
-from pydantic import BaseModel, ConfigDict
 from textwrap import dedent, indent
 from typing import Any, Self
+
 import yaml
+from pydantic import BaseModel, ConfigDict
 
 
 class Config(BaseModel):

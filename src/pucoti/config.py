@@ -1,14 +1,13 @@
+from dataclasses import field
 from functools import cached_property
 from pathlib import Path
-from dataclasses import field
 from typing import Annotated, Literal, Self
 
 from pydantic import Field
 
-
 from . import constants
-from .dfont import DFont
 from .base_config import Config
+from .dfont import DFont
 
 
 class RunAtConfig(Config):

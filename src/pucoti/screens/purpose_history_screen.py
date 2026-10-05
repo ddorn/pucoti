@@ -1,9 +1,9 @@
 from time import time
 
-from luckypot.gfx import GFX
 import pygame as pg
+from luckypot.gfx import GFX
 
-from .. import time_utils, pygame_utils
+from .. import pygame_utils, time_utils
 from .base_screen import PucotiScreen
 
 

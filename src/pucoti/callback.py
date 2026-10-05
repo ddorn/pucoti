@@ -1,5 +1,5 @@
-import traceback
 import subprocess
+import traceback
 
 from . import time_utils
 from .config import RunAtConfig
@@ -21,10 +21,7 @@ class CountdownCallback:
         """Call the command if needed. Current time is the number of seconds on screen."""
         if current_time >= self.time:
             self.last_executed = None
-        elif self.last_executed is None:
-            self.last_executed = current_time
-            self.run()
-        elif self.every is not None and self.last_executed - current_time >= self.every:
+        elif self.last_executed is None or self.every is not None and self.last_executed - current_time >= self.every:
             self.last_executed = current_time
             self.run()
 

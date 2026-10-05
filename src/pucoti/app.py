@@ -21,26 +21,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from pathlib import Path
 from typing import Annotated
+
 import typer
 from click.core import ParameterSource
-
 
 # By default pygame prints its version to the console when imported. We deactivate that.
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
+import luckypot
 import pygame
 import pygame.locals as pg
-import luckypot
 
-
-from . import constants
-from . import platforms
-from . import pygame_utils
+from . import constants, platforms, pygame_utils
 from .config import PucotiConfig, RunAtConfig, SocialConfig
-from .screens.base_screen import PucotiScreen
-from .screens.start_screen import StartScreen
 from .context import Context
 from .controller import Controller
+from .screens.base_screen import PucotiScreen
+from .screens.start_screen import StartScreen
 from .telemetry import TelemetryClient
 
 
